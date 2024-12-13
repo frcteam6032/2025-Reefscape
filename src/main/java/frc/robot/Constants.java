@@ -147,9 +147,4 @@ public final class Constants {
     public static final double kFreeSpeedRpm = 5676;
   }
 
-  public static final class ArmConstants {
-    public static final double max_limit = 218;
-    public static final double min_limit = 1;  // Changed from 3
-    public static final double mid_limit = 120;
-  }
 }
