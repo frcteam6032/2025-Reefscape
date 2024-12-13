@@ -5,10 +5,9 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
-import frc.robot.Constants;
 import frc.robot.Constants.OIConstants;
 
-public class ComputerAlign extends Command {
+public class VisionAssistance extends Command {
 
     private final VisionSubsystem m_visionSubsystem;
     private final DriveSubsystem m_drivetrainSubsystem;
@@ -16,30 +15,22 @@ public class ComputerAlign extends Command {
 
     // Filtering vars 
     private double previousTx = 0.0;
-    private double previousTy = 0.0;
     private final double alpha = 0.5; // Smoothing factor 0-1 (the time interval per update)
 
     // d/dx for yaw
     private double previousErrorYaw = 0.0;
 
     // Slew rate limiting 
-    private double previousVelocity_X = 0.0;
-    private double previousVelocity_Y = 0.0;
     private double previousVelocity_R = 0.0;
     private final double maxAcceleration = 0.02; // Max change in velocity 
 
-    // Control gains
-    private final double kP_Side = 0.03;     
-    private final double kP_Distance = 0.05; 
     private final double kP_Yaw = 0.02;       
     private final double kD_Yaw = 0.01;       // d/dx for yaw
 
     // Deadbands
     private final double deadbandYaw = 1.0;     // Degrees
-    private final double deadbandSide = 1.0;    // Degrees
-    private final double deadbandDistance = 1.0;
 
-    public ComputerAlign(DriveSubsystem drivetrainSubsystem, VisionSubsystem visionSubsystem) {
+    public VisionAssistance(DriveSubsystem drivetrainSubsystem, VisionSubsystem visionSubsystem) {
         this.m_drivetrainSubsystem = drivetrainSubsystem;
         this.m_visionSubsystem = visionSubsystem;
 
@@ -54,55 +45,6 @@ public class ComputerAlign extends Command {
         return filteredTx;
     }
 
-    // Filter for y
-    private double getFilteredTy() {
-        double currentTy = m_visionSubsystem.getTY();
-        double filteredTy = alpha * currentTy + (1 - alpha) * previousTy;
-        previousTy = filteredTy;
-        return filteredTy;
-    }
-
-    // Align side 
-    private double alignSide() {
-        double tx = getFilteredTx();
-        double errorSide = tx;
-
-        if (Math.abs(errorSide) < deadbandSide) {
-            return 0.0;
-        }
-
-        double velocity_Y = -kP_Side * errorSide;
-
-        // Limit maximum speed
-        velocity_Y = Math.max(Math.min(velocity_Y, 0.3), -0.3);
-
-        // Apply slew rate limiting
-        velocity_Y = limitAcceleration(velocity_Y, previousVelocity_Y);
-        previousVelocity_Y = velocity_Y;
-
-        return velocity_Y;
-    }
-
-    // Align distance (forward/backward)
-    private double alignDistance() {
-        double ty = getFilteredTy();
-        double errorDistance = ty;
-
-        if (Math.abs(errorDistance) < deadbandDistance) {
-            return 0.0;
-        }
-
-        double velocity_X = -kP_Distance * errorDistance;
-
-        // Limit maximum speed
-        velocity_X = Math.max(Math.min(velocity_X, 0.3), -0.3);
-
-        // Apply slew rate limiting
-        velocity_X = limitAcceleration(velocity_X, previousVelocity_X);
-        previousVelocity_X = velocity_X;
-
-        return velocity_X;
-    }
 
     // Align yaw 
     private double alignYaw(double currentYaw) {
@@ -141,16 +83,11 @@ public class ComputerAlign extends Command {
     @Override
     public void execute() {
         if (m_visionSubsystem.isTargetValid()) {
-            // Get the correction velocities 
-            double velocity_Y = alignSide();
-            double velocity_X = alignDistance();
             double velocity_R = alignYaw(m_drivetrainSubsystem.getHeading());
-
-            
-            // Drive
+            // Allow the driver to make movements while the computer attempts to automatically aim at a target
            m_drivetrainSubsystem.drive(-MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband), -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband), velocity_R, false, false);
         } else {
-            // Abort the command if the target is not found 
+            // Abort the command if the target is not found
             m_drivetrainSubsystem.drive(0.0, 0.0, 0.0, false, false);
         }
     }

@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.cscore.UsbCamera;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -38,8 +37,7 @@ public class Robot extends TimedRobot {
   private Field2d field2d = new Field2d();
   // LimeLight debug
   GenericEntry targetFound = tab_competition.add("(LimeLight): Target Focused", false).withSize(4,4).getEntry();
-  GenericEntry offset_x = tab_competition.add("(LimeLight): Degree Inaccuracy [X]", 0).withSize(4,4).getEntry();
-  GenericEntry offset_y = tab_competition.add("(LimeLight): Degree Inaccuracy [Y]", 0).withSize(4,4).getEntry();
+  GenericEntry offset_x = tab_competition.add("(LimeLight): Inaccuracy [X]", 0).withSize(4,4).getEntry();
   GenericEntry display_yaw = tab_competition.add("YAW", 0).withSize(4,4).getEntry();
 
 

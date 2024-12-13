@@ -18,18 +18,11 @@ import edu.wpi.first.util.WPIUtilJNI;
 import frc.robot.Constants.DriveConstants;
 import frc.utils.SwerveUtils;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import com.ctre.phoenix6.hardware.Pigeon2;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.util.PIDConstants;
-// import com.pathplanner.lib.config.RobotConfig
 
-
-//import com.pathplanner.lib.;
 
 public class DriveSubsystem extends SubsystemBase {
   // Create MAXSwerveModules
@@ -259,6 +252,7 @@ public class DriveSubsystem extends SubsystemBase {
     double ySpeedDelivered = ySpeedCommanded * DriveConstants.kMaxSpeedMetersPerSecond;
     double rotDelivered = m_currentRotation * DriveConstants.kMaxAngularSpeed;
 
+    @SuppressWarnings("removal")
     var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
@@ -305,15 +299,16 @@ public class DriveSubsystem extends SubsystemBase {
     m_rearRight.resetEncoders();
   }
 
-  /** Zeroes the heading of the robot. */
 
   public double getHeading() {
+    // Get the heading and normalize it between 0 and 360 to ensure proper readings 
     return m_gyro.getYaw().getValueAsDouble() % 360; 
   }
 
 
   public Pose2d getRobotPoseEstimate()
   {
+    // Returns the estimatied robot position (x,y,yaw)
     return new Pose2d(-m_poseEstimator.getEstimatedPosition().getX(), -m_poseEstimator.getEstimatedPosition().getY(), m_poseEstimator.getEstimatedPosition().getRotation());
   }
 }

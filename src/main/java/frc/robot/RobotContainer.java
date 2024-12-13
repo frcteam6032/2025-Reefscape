@@ -2,10 +2,9 @@ package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants.OIConstants;
-import frc.robot.commands.ComputerAlign;
+import frc.robot.commands.VisionAssistance;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,7 +21,7 @@ public class RobotContainer {
     private final XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
 
     // Create the alignment command
-    private final Command ComputerAligner = new ComputerAlign(m_robotDrive, m_limelight);
+    private final Command ComputerAligner = new VisionAssistance(m_robotDrive, m_limelight);
 
     public RobotContainer() {
         // Set the vision subsystem in the drive subsystem

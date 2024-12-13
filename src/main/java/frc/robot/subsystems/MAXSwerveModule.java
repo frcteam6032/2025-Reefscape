@@ -10,20 +10,15 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.RelativeEncoder;
 
 import frc.robot.Constants.ModuleConstants;
 
 public class MAXSwerveModule {
-  
+  // Create new instance of the spark maxes 
   private final SparkMax m_drivingSparkMax;
   private final SparkMax m_turningSparkMax;
 
@@ -37,7 +32,7 @@ public class MAXSwerveModule {
    * MAXSwerve Module built with NEOs, SPARKS MAX, and a Through Bore
    * Encoder.
    */
-
+  
    // https://docs.revrobotics.com/brushless/revlib/revlib-overview/migrating-to-revlib-2025
 
   public MAXSwerveModule(int drivingCANId, int turningCANId, double chassisAngularOffset) {
@@ -47,12 +42,7 @@ public class MAXSwerveModule {
     SparkMaxConfig drivingConfig = new SparkMaxConfig();
     SparkMaxConfig turningConfig = new SparkMaxConfig();
 
-    // TODO: Maybe add these
-//    m_turningPIDController.setPositionPIDWrappingEnabled(true);
-//m_turningPIDController.setPositionPIDWrappingMinInput(ModuleConstants.kTurningEncoderPositionPIDMinInput);
-//m_turningPIDController.setPositionPIDWrappingMaxInput(ModuleConstants.kTurningEncoderPositionPIDMaxInput);
-//   m_turningPIDController.setOutputRange(ModuleConstants.kTurningMinOutput, ModuleConstants.kTurningMaxOutput);
-
+    // Create the configurations for the spark max
     drivingConfig
     .idleMode(ModuleConstants.kDrivingMotorIdleMode)
     .smartCurrentLimit(ModuleConstants.kDrivingMotorCurrentLimit);
@@ -72,10 +62,13 @@ public class MAXSwerveModule {
     .velocityConversionFactor(ModuleConstants.kTurningEncoderVelocityFactor);
     drivingConfig.closedLoop
     .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-    .pid(ModuleConstants.kTurningP, ModuleConstants.kTurningI, ModuleConstants.kTurningD);
+    .pid(ModuleConstants.kTurningP, ModuleConstants.kTurningI, ModuleConstants.kTurningD)
+    .positionWrappingEnabled(true)
+    .positionWrappingMinInput(ModuleConstants.kTurningEncoderPositionPIDMinInput)
+    .positionWrappingMaxInput(ModuleConstants.kTurningEncoderPositionPIDMaxInput);
     
-
-
+  
+    // Burn the configurations to the memory 
     m_drivingSparkMax.configure(drivingConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     m_turningSparkMax.configure(turningConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -126,6 +119,7 @@ public class MAXSwerveModule {
     correctedDesiredState.angle = desiredState.angle.plus(Rotation2d.fromRadians(m_chassisAngularOffset));
 
     // Optimize the reference state to avoid spinning further than 90 degrees.
+    @SuppressWarnings("deprecation")
     SwerveModuleState optimizedDesiredState = SwerveModuleState.optimize(correctedDesiredState,
         new Rotation2d(m_turningSparkMax.getEncoder().getPosition()));
 
