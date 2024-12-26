@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveSubsystem;
@@ -13,31 +14,42 @@ public class VisionAssistance extends Command {
     private final DriveSubsystem m_drivetrainSubsystem;
     private final XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
 
-    // Filtering vars 
+    // Filtering
     private double previousTx = 0.0;
-    private final double alpha = 0.5; // Smoothing factor 0-1 (the time interval per update)
+    private final double alpha = 0.5;     // Smoothing
 
-    // d/dx for yaw
-    private double previousErrorYaw = 0.0;
-
-    // Slew rate limiting 
+    // Slew rate limiting
     private double previousVelocity_R = 0.0;
-    private final double maxAcceleration = 0.02; // Max change in velocity 
+    private final double maxAcceleration = 0.02;  // Max change 
 
-    private final double kP_Yaw = 0.02;       
-    private final double kD_Yaw = 0.01;       // d/dx for yaw
+    // Use the "custom" PID from WPI
+    private final PIDController yaw_pid_controller;
 
-    // Deadbands
-    private final double deadbandYaw = 1.0;     // Degrees
+    // PID constants 
+    private final double kP_Yaw = 0.02;
+    private final double kI_Yaw = 0.0;
+    private final double kD_Yaw = 0.01;
+
+    // Max the computer can look away from target origin 
+    private final double inaccuracyThreshold = 1.0;
 
     public VisionAssistance(DriveSubsystem drivetrainSubsystem, VisionSubsystem visionSubsystem) {
         this.m_drivetrainSubsystem = drivetrainSubsystem;
         this.m_visionSubsystem = visionSubsystem;
-
         addRequirements(drivetrainSubsystem, visionSubsystem);
+
+        // Config the controller
+        yaw_pid_controller = new PIDController(kP_Yaw, kI_Yaw, kD_Yaw);
+        
+        // Say our error should be 0
+        yaw_pid_controller.setSetpoint(0.0);
+
+        // Max degrees away from setpoint
+        yaw_pid_controller.setTolerance(inaccuracyThreshold);
+
     }
 
-    // Filter for x
+
     private double getFilteredTx() {
         double currentTx = m_visionSubsystem.getTX();
         double filteredTx = alpha * currentTx + (1 - alpha) * previousTx;
@@ -45,51 +57,36 @@ public class VisionAssistance extends Command {
         return filteredTx;
     }
 
-
-    // Align yaw 
-    private double alignYaw(double currentYaw) {
-        double tx = getFilteredTx();
-        double errorYaw = -tx;
-
-        if (Math.abs(errorYaw) < deadbandYaw) {
-            previousErrorYaw = errorYaw; // Update for d/dx
-            previousVelocity_R = 0.0;
-            return 0.0;
-        }
-
-        // Calculate derivative (change in error)
-        double derivativeYaw = errorYaw - previousErrorYaw;
-        previousErrorYaw = errorYaw;
-
-        double velocity_R = kP_Yaw * errorYaw + kD_Yaw * derivativeYaw;
-
-        // Limit maximum rotation speed
-        velocity_R = Math.max(Math.min(velocity_R, 0.3), -0.3);
-
-        // Apply slew rate limiting
-        velocity_R = limitAcceleration(velocity_R, previousVelocity_R);
-        previousVelocity_R = velocity_R;
-
-        return velocity_R;
-    }
-
-    // Limit acceleration
-    private double limitAcceleration(double desiredVelocity, double previousVelocity) {
-        double deltaVelocity = desiredVelocity - previousVelocity;
-        deltaVelocity = Math.max(Math.min(deltaVelocity, maxAcceleration), -maxAcceleration);
-        return previousVelocity + deltaVelocity;
-    }
-
     @Override
     public void execute() {
-        if (m_visionSubsystem.isTargetValid()) {
-            double velocity_R = alignYaw(m_drivetrainSubsystem.getHeading());
-            // Allow the driver to make movements while the computer attempts to automatically aim at a target
-           m_drivetrainSubsystem.drive(-MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband), -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband), velocity_R, false, false);
+        if (m_visionSubsystem.isTargetValid() && yaw_pid_controller.atSetpoint() == false) {
+            // Get the filtered measurement
+            double tx = getFilteredTx();
+
+            // Find computed speed 
+            double velocity_R = yaw_pid_controller.calculate(tx);
+
+            // Normalize values between -0.3 and 0.3
+            velocity_R = MathUtil.clamp(velocity_R, -0.3, 0.3);
+
+            // Acceleration limiting
+            velocity_R = limitAcceleration(velocity_R, previousVelocity_R);
+            previousVelocity_R = velocity_R;
+
+            double xMove = -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband);
+            double yMove  = -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband);
+            // Only modify rotational velocity using the computer
+            m_drivetrainSubsystem.drive(xMove, yMove, velocity_R, false, false);
         } else {
-            // Abort the command if the target is not found
             m_drivetrainSubsystem.drive(0.0, 0.0, 0.0, false, false);
         }
+    }
+
+ 
+    private double limitAcceleration(double desiredVelocity, double previousVelocity) {
+        double deltaVelocity = desiredVelocity - previousVelocity;
+        deltaVelocity = MathUtil.clamp(deltaVelocity, -maxAcceleration, maxAcceleration);
+        return previousVelocity + deltaVelocity;
     }
 
     @Override
