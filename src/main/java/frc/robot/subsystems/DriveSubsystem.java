@@ -265,7 +265,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   public Pose2d getRobotPoseEstimate()
   {
-    // Returns the estimatied robot position (x,y,yaw)
+    // Returns the estimated robot position (x,y,yaw)
     return new Pose2d(-m_poseEstimator.getEstimatedPosition().getX(), -m_poseEstimator.getEstimatedPosition().getY(), m_poseEstimator.getEstimatedPosition().getRotation());
   }
 }
