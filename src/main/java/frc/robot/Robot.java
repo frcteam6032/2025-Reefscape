@@ -137,7 +137,7 @@ public class Robot extends TimedRobot {
   }
 
   public void update_vision_display() {
-    targetFound.setBoolean(m_robotContainer.targetValid());
+    targetFound.setBoolean(m_robotContainer.display_targetValid());
     offset_x.setDouble(m_robotContainer.tx());
     display_yaw.setDouble(m_robotContainer.get_display_yaw());
   }
