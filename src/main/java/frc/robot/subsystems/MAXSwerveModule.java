@@ -107,7 +107,7 @@ public class MAXSwerveModule {
     // Apply chassis angular offset to the encoder position to get the position
     // relative to the chassis.
     return new SwerveModulePosition(
-        -m_drivingSparkMax.getEncoder().getPosition(),
+        -m_drivingSparkMax.getEncoder().getPosition(), // NOTE this was negated by Koen but it works
         new Rotation2d(m_turningSparkMax.getAbsoluteEncoder().getPosition() - m_chassisAngularOffset));
   }
 

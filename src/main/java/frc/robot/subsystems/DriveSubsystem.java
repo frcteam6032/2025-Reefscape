@@ -49,11 +49,11 @@ public class DriveSubsystem extends SubsystemBase {
   // The gyro sensor
   private final Pigeon2 m_gyro;
 
-  // Slew rate filter variables for controlling lateral acceleration
+  // FOR DRIVE METHOD
+  // Slew rate filter variables for controlling lateral acceleration in the drive method
   private double m_currentRotation = 0.0;
   private double m_currentTranslationDir = 0.0;
   private double m_currentTranslationMag = 0.0;
-
   private SlewRateLimiter m_magLimiter = new SlewRateLimiter(DriveConstants.kMagnitudeSlewRate);
   private SlewRateLimiter m_rotLimiter = new SlewRateLimiter(DriveConstants.kRotationalSlewRate);
   private double m_prevTime = WPIUtilJNI.now() * 1e-6;
@@ -108,7 +108,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Use vision measurement if available
     if (m_visionSubsystem != null && m_visionSubsystem.isTargetValid()) {
-      double[] botPoseArray = m_visionSubsystem.getBotPose();
+      double[] botPoseArray = m_visionSubsystem.getBotPose(); // TODO change here too
       if (botPoseArray.length == 6) {
         double x = botPoseArray[0]; // Meters
         double y = botPoseArray[1];
@@ -131,7 +131,7 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @param pose The pose to which to set the odometry.
    */
-  public void resetOdometry(Pose2d pose) {
+  public void setOdometry(Pose2d pose) {
     m_poseEstimator.resetPosition(
       m_gyro.getRotation2d(),
         new SwerveModulePosition[] {
@@ -239,7 +239,7 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @param desiredStates The desired SwerveModule states.
    */
-  public void setModuleStates(SwerveModuleState[] desiredStates) {
+  private void setModuleStates(SwerveModuleState[] desiredStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(
         desiredStates, DriveConstants.kMaxSpeedMetersPerSecond);
     m_frontLeft.setDesiredState(desiredStates[0]);
@@ -259,13 +259,14 @@ public class DriveSubsystem extends SubsystemBase {
 
   public double getHeading() {
     // Get the heading and normalize it between 0 and 360 to ensure proper readings 
-    return m_gyro.getYaw().getValueAsDouble() % 360; 
+    return getRobotPoseEstimate().getRotation().getDegrees(); 
   }
 
 
   public Pose2d getRobotPoseEstimate()
   {
     // Returns the estimated robot position (x,y,yaw)
+    // WARNING the negating of x & y could cause issues with auto driving
     return new Pose2d(-m_poseEstimator.getEstimatedPosition().getX(), -m_poseEstimator.getEstimatedPosition().getY(), m_poseEstimator.getEstimatedPosition().getRotation());
   }
 }

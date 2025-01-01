@@ -47,7 +47,7 @@ public class RobotContainer {
         // Y for assisted targeting 
         new Trigger(m_driverController::getYButton).whileTrue(ComputerAligner);
         new Trigger(m_driverController::getBButton)
-                .onTrue(Commands.runOnce(() -> m_robotDrive.resetOdometry(new Pose2d())));
+                .onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
     }
 
     public double get_display_yaw() {

@@ -7,12 +7,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import frc.robot.Constants.OIConstants;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class VisionAssistance extends Command {
 
     private final VisionSubsystem m_visionSubsystem;
     private final DriveSubsystem m_drivetrainSubsystem;
     private final XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
+
 
     // Filtering
     private double previousTx = 0.0;
@@ -54,6 +56,8 @@ public class VisionAssistance extends Command {
         double currentTx = m_visionSubsystem.getTX();
         double filteredTx = alpha * currentTx + (1 - alpha) * previousTx;
         previousTx = filteredTx;
+        // SmartDashboard.putNumber("Filtered Tx", filteredTx);
+        // SmartDashboard.putNumber("Raw Tx", currentTx);
         return filteredTx;
     }
 
@@ -70,6 +74,7 @@ public class VisionAssistance extends Command {
             velocity_R = MathUtil.clamp(velocity_R, -0.3, 0.3);
 
             // Acceleration limiting
+            // TODO change to slew rate limiter
             velocity_R = limitAcceleration(velocity_R, previousVelocity_R);
             previousVelocity_R = velocity_R;
 

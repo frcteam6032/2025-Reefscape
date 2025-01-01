@@ -61,7 +61,7 @@ public class VisionSubsystem extends SubsystemBase {
 
   
   // Estimates in order: x, y, z, roll, pitch, yaw
-  public double[] getBotPose() {
+  public double[] getBotPose() { // TODO change to return a Pose2d
     return botPose;
   }
 
