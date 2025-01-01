@@ -110,19 +110,13 @@ public class DriveSubsystem extends SubsystemBase {
 
     // Update estimate with vision data
     if (m_visionSubsystem != null && m_visionSubsystem.isTargetValid()) {
-      double[] botPoseArray = m_visionSubsystem.getBotPose();
-      if (botPoseArray.length == 6) {
-        double x = botPoseArray[0];
-        double y = botPoseArray[1];
-        double yawDeg = botPoseArray[5];
-
-        Pose2d visionPose = new Pose2d(x, y, Rotation2d.fromDegrees(yawDeg));
+        Pose2d visionPose = m_visionSubsystem.getBotPose();
 
         double latency = m_visionSubsystem.getLatency();
         double timestamp = Timer.getFPGATimestamp() - (latency / 1000.0);
 
         m_poseEstimator.addVisionMeasurement(visionPose, timestamp);
-      }
+      
     }
   }
 
