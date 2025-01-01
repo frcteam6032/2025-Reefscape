@@ -21,7 +21,7 @@ public class RobotContainer {
     private final XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
 
     // Create the alignment command
-    private final Command ComputerAligner = new VisionAssistance(m_robotDrive, m_limelight);
+    private final Command ComputerAligner = new VisionAssistance(m_robotDrive);
 
     public RobotContainer() {
         // Set the vision subsystem in the drive subsystem
@@ -29,16 +29,23 @@ public class RobotContainer {
 
         // Config the buttosn
         configureButtonBindings();
+        
 
-        // Config buttons
+        // Set the default command
         m_robotDrive.setDefaultCommand(
-                new RunCommand(
-                        () -> m_robotDrive.drive(
-                                -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
-                                true, false),
-                        m_robotDrive));
+            new RunCommand(
+                () -> {
+                    // If you want heading hold normally on, call m_robotDrive.enableHeadingHold(true) 
+                    // somewhere or toggle it with a button.
+                    double x = -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband);
+                    double y = -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband);
+                    double rot = -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband);
+
+                    m_robotDrive.drive(x, y, rot, true, false);
+                },
+                m_robotDrive
+            )
+        );
     }
 
     private void configureButtonBindings() {

@@ -147,4 +147,11 @@ public final class Constants {
     public static final double kFreeSpeedRpm = 5676;
   }
 
+
+  public static final class Yaw_PID_Constants {
+    public static final double kP_Yaw = 0.02;
+    public static final double kI_Yaw = 0.0;
+    public static final double kD_Yaw = 0.01;
+    public static final double inaccuracyThreshold = 1.0;
+  }
 }
