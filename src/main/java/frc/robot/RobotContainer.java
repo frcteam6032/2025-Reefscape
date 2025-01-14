@@ -44,7 +44,7 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Setting up driver commands
 
-        // Y for assisted targeting 
+        // Y for assisted targeting
         new Trigger(m_driverController::getYButton).whileTrue(ComputerAligner);
         new Trigger(m_driverController::getBButton)
                 .onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
@@ -77,6 +77,5 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         return null;
     }
-
 
 }
