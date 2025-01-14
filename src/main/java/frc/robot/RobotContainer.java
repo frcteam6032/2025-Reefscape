@@ -43,17 +43,11 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         // Setting up driver commands
-       // new Trigger(m_driverController::getAButton).onTrue(Commands.runOnce(() -> m_robotDrive.setHeading(0.0)));
+
+        // Y for assisted targeting 
         new Trigger(m_driverController::getYButton).whileTrue(ComputerAligner);
         new Trigger(m_driverController::getBButton)
-                .onTrue(Commands.runOnce(() -> m_robotDrive.resetOdometry(new Pose2d())));
-       // new Trigger(m_driverController::getXButton).onTrue(Commands.runOnce(() -> m_robotDrive.incrementHeading(90)));
-    }
-
-    // Method to set the YAW (so we can account for offset starting position for the
-    // robot relative to the driver/operator)
-    public void headingSet(double degree) {
-       // m_robotDrive.setHeading(degree);
+                .onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
     }
 
     public double get_display_yaw() {
@@ -61,7 +55,7 @@ public class RobotContainer {
     }
 
     // Getter function to see if the target is valid
-    public boolean targetValid() {
+    public boolean display_targetValid() {
         return m_limelight.isTargetValid();
     }
 

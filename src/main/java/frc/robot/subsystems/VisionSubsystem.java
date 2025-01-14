@@ -42,38 +42,30 @@ public class VisionSubsystem extends SubsystemBase {
     latency = tl + cl;
   }
 
-  /**
-   Get horzontial offet in degrees
-   */
+ 
+  // Degrees offset on the X axis from the target origin
   public double getTX() {
     return tx;
   }
 
-  /**
-   Get vertical offset in degrees
-   */
+  // Degrees offset on the Y axis from the target origin
   public double getTY() {
     return ty;
   }
 
-  /**
-   See if a target is found 
-   */
-  // Remember that the target can only be seen -29.8 to 29.8 degrees in any axis
+ 
+  // Returns if a target is found (-29.8 to 29.8 degrees in any axis)
   public boolean isTargetValid() {
     return (tv == 1.0);
   }
 
-  /**
-   Estimates in order: x, y, z, roll, pitch, yaw
-   */
-  public double[] getBotPose() {
+  
+  // Estimates in order: x, y, z, roll, pitch, yaw
+  public double[] getBotPose() { // TODO change to return a Pose2d
     return botPose;
   }
 
-  /**
-   Latency in ms
-   */
+  // Latency (ms)
   public double getLatency() {
     return latency;
   }

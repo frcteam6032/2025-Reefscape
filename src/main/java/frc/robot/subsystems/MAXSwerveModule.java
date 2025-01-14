@@ -39,6 +39,8 @@ public class MAXSwerveModule {
     m_drivingSparkMax = new SparkMax(drivingCANId, MotorType.kBrushless);
     m_turningSparkMax = new SparkMax(turningCANId, MotorType.kBrushless);
 
+    // The docs specified a migration for the relative encoders but not the absolute encoders
+
     SparkMaxConfig drivingConfig = new SparkMaxConfig();
     SparkMaxConfig turningConfig = new SparkMaxConfig();
 
@@ -51,7 +53,8 @@ public class MAXSwerveModule {
     .velocityConversionFactor(ModuleConstants.kDrivingEncoderVelocityFactor);
     drivingConfig.closedLoop
     .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-    .pid(ModuleConstants.kDrivingP, ModuleConstants.kDrivingI, ModuleConstants.kDrivingD);
+    .pidf(ModuleConstants.kDrivingP, ModuleConstants.kDrivingI, ModuleConstants.kDrivingD, ModuleConstants.kDrivingFF)
+    .outputRange(ModuleConstants.kDrivingMinOutput, ModuleConstants.kDrivingMaxOutput);
 
     turningConfig
     .idleMode(ModuleConstants.kTurningMotorIdleMode)
@@ -62,10 +65,11 @@ public class MAXSwerveModule {
     .velocityConversionFactor(ModuleConstants.kTurningEncoderVelocityFactor);
     turningConfig.closedLoop
     .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-    .pid(ModuleConstants.kTurningP, ModuleConstants.kTurningI, ModuleConstants.kTurningD)
+    .pidf(ModuleConstants.kTurningP, ModuleConstants.kTurningI, ModuleConstants.kTurningD, ModuleConstants.kTurningFF)
     .positionWrappingEnabled(true)
     .positionWrappingMinInput(ModuleConstants.kTurningEncoderPositionPIDMinInput)
-    .positionWrappingMaxInput(ModuleConstants.kTurningEncoderPositionPIDMaxInput);
+    .positionWrappingMaxInput(ModuleConstants.kTurningEncoderPositionPIDMaxInput)
+    .outputRange(ModuleConstants.kTurningMinOutput, ModuleConstants.kTurningMaxOutput);
     
   
     // Burn the configurations to the memory 
@@ -74,7 +78,7 @@ public class MAXSwerveModule {
 
 
     m_chassisAngularOffset = chassisAngularOffset;
-    m_desiredState.angle = new Rotation2d(m_turningSparkMax.getEncoder().getPosition());
+    m_desiredState.angle = new Rotation2d(m_turningSparkMax.getAbsoluteEncoder().getPosition());
     m_drivingSparkMax.getEncoder().setPosition(0);
   }
 
@@ -88,7 +92,7 @@ public class MAXSwerveModule {
     // relative to the chassis.
     return new SwerveModuleState(m_drivingSparkMax.getEncoder().getVelocity()
     ,
-        new Rotation2d(m_turningSparkMax.getEncoder().getVelocity() - m_chassisAngularOffset));
+        new Rotation2d(m_turningSparkMax.getAbsoluteEncoder().getPosition() - m_chassisAngularOffset));
   }
 
   /**
@@ -103,8 +107,8 @@ public class MAXSwerveModule {
     // Apply chassis angular offset to the encoder position to get the position
     // relative to the chassis.
     return new SwerveModulePosition(
-        -m_drivingSparkMax.getEncoder().getPosition(),
-        new Rotation2d(m_turningSparkMax.getEncoder().getPosition() - m_chassisAngularOffset));
+        -m_drivingSparkMax.getEncoder().getPosition(), // NOTE this was negated by Koen but it works
+        new Rotation2d(m_turningSparkMax.getAbsoluteEncoder().getPosition() - m_chassisAngularOffset));
   }
 
   /**
@@ -121,7 +125,7 @@ public class MAXSwerveModule {
     // Optimize the reference state to avoid spinning further than 90 degrees.
     @SuppressWarnings("deprecation")
     SwerveModuleState optimizedDesiredState = SwerveModuleState.optimize(correctedDesiredState,
-        new Rotation2d(m_turningSparkMax.getEncoder().getPosition()));
+        new Rotation2d(m_turningSparkMax.getAbsoluteEncoder().getPosition()));
 
     // Command driving and turning SPARKS MAX towards their respective setpoints.
 
