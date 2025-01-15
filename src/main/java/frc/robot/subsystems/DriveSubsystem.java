@@ -7,8 +7,10 @@ package frc.robot.subsystems;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -17,11 +19,23 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.WPIUtilJNI;
 import frc.robot.Constants.DriveConstants;
 import frc.utils.SwerveUtils;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Mass;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 public class DriveSubsystem extends SubsystemBase {
     // Create MAXSwerveModules
@@ -87,6 +101,46 @@ public class DriveSubsystem extends SubsystemBase {
                 stateStdDevs,
                 visionMeasurementStdDevs);
 
+        // Load the RobotConfig from the GUI settings. You should probably
+        // store this in your Constants file
+        RobotConfig config;// = new RobotConfig(74, 6.8, new ModuleConfig(null, null, m_currentRotation, null, null, 0), new Translation2d(0, 0));
+        try {
+            config = RobotConfig.fromGUISettings();
+
+        // Configure AutoBuilder last
+        AutoBuilder.configure(
+            this::getRobotPoseEstimate, // Robot pose supplier
+            this::setOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+            this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, false, false), // Method that will drive the robot given ROBOT
+                                                                  // RELATIVE ChassisSpeeds. Also optionally outputs
+                                                                  // individual module feedforwards
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
+                                            // holonomic drive trains
+                    new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+            config, // The robot configuration
+            () -> {
+                // Boolean supplier that controls when the path will be mirrored for the red
+                // alliance
+                // This will flip the path being followed to the red side of the field.
+                // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                var alliance = DriverStation.getAlliance();
+                if (alliance.isPresent()) {
+                    return alliance.get() == DriverStation.Alliance.Red;
+                }
+                return false;
+            },
+            this // Reference to this subsystem to set requirements
+    );
+        } catch (Exception e) {
+            // Handle exception as needed
+            e.printStackTrace();
+        }
+
+
     }
 
     public void setVisionSubsystem(VisionSubsystem visionSubsystem) {
@@ -141,6 +195,7 @@ public class DriveSubsystem extends SubsystemBase {
                 pose);
     }
 
+   
     /**
      * Method to drive the robot using joystick info.
      *
@@ -203,21 +258,27 @@ public class DriveSubsystem extends SubsystemBase {
             m_currentRotation = rot;
         }
 
-        // Convert the commanded speeds into the correct units for the drivetrain
-        double xSpeedDelivered = xSpeedCommanded * DriveConstants.kMaxSpeedMetersPerSecond;
-        double ySpeedDelivered = ySpeedCommanded * DriveConstants.kMaxSpeedMetersPerSecond;
-        double rotDelivered = m_currentRotation * DriveConstants.kMaxAngularSpeed;
 
         @SuppressWarnings("removal")
         var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
                 fieldRelative
-                        ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
+                        ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedCommanded, ySpeedCommanded, m_currentRotation,
                                 m_gyro.getRotation2d())
-                        : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
+                        : new ChassisSpeeds(xSpeedCommanded, ySpeedCommanded, m_currentRotation));
 
         setModuleStates(swerveModuleStates);
     }
 
+
+    public void joystickDrive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
+        // Convert the commanded speeds into the correct units for the drivetrain
+        double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
+        double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
+        double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
+    
+        drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative, rateLimit);
+    }
+        
     /**
      * Sets the wheels into an X formation to prevent movement.
      */
@@ -262,4 +323,15 @@ public class DriveSubsystem extends SubsystemBase {
                 -m_poseEstimator.getEstimatedPosition().getY(),
                 m_poseEstimator.getEstimatedPosition().getRotation());
     }
+
+    public ChassisSpeeds getChassisSpeeds() {
+        return DriveConstants.kDriveKinematics.toChassisSpeeds(
+            m_frontLeft.getState(),
+            m_frontRight.getState(),
+            m_rearLeft.getState(),
+            m_rearRight.getState()
+        );
+    }
+
+
 }
