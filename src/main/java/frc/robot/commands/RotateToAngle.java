@@ -32,7 +32,7 @@ public class RotateToAngle extends Command {
   @Override
   public void initialize() {
     yawController = new PIDController(0.2, 0, 0);
-
+    yawController.enableContinuousInput(-180, 180);
     yawController.reset();
   }
 
@@ -40,7 +40,7 @@ public class RotateToAngle extends Command {
   @Override
   public void execute() {
    double output = yawController.calculate(m_offset.getAsDouble());
-   m_driveSubsystem.joystickDrive(m_speedX.getAsDouble(), m_speedY.getAsDouble(), output / DriveConstants.kMaxAngularSpeed, true, false);
+   m_driveSubsystem.joystickDrive(m_speedX.getAsDouble(), m_speedY.getAsDouble(), output / DriveConstants.kMaxAngularSpeed, true);
   }
 
   // Called once the command ends or is interrupted.

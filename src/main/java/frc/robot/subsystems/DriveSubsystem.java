@@ -24,10 +24,14 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Mass;
 
+import com.ctre.phoenix6.configs.CustomParamsConfigs;
+import com.ctre.phoenix6.configs.Pigeon2Configuration;
+import com.ctre.phoenix6.configs.Pigeon2FeaturesConfigs;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
@@ -87,6 +91,7 @@ public class DriveSubsystem extends SubsystemBase {
 
         m_gyro = new Pigeon2(15); // Pigeon is on CAN Bus with device ID 15
         m_gyro.setYaw(0);
+
         // Initialize the pose estimator
         m_poseEstimator = new SwerveDrivePoseEstimator(
                 DriveConstants.kDriveKinematics,
@@ -103,43 +108,46 @@ public class DriveSubsystem extends SubsystemBase {
 
         // Load the RobotConfig from the GUI settings. You should probably
         // store this in your Constants file
-        RobotConfig config;// = new RobotConfig(74, 6.8, new ModuleConfig(null, null, m_currentRotation, null, null, 0), new Translation2d(0, 0));
+        RobotConfig config;// = new RobotConfig(74, 6.8, new ModuleConfig(null, null, m_currentRotation,
+                           // null, null, 0), new Translation2d(0, 0));
         try {
             config = RobotConfig.fromGUISettings();
 
-        // Configure AutoBuilder last
-        AutoBuilder.configure(
-            this::getRobotPoseEstimate, // Robot pose supplier
-            this::setOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
-            this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            (speeds, feedforwards) -> drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, false, false), // Method that will drive the robot given ROBOT
-                                                                  // RELATIVE ChassisSpeeds. Also optionally outputs
-                                                                  // individual module feedforwards
-            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
-                                            // holonomic drive trains
-                    new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
-            ),
-            config, // The robot configuration
-            () -> {
-                // Boolean supplier that controls when the path will be mirrored for the red
-                // alliance
-                // This will flip the path being followed to the red side of the field.
-                // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+            // Configure AutoBuilder last
+            AutoBuilder.configure(
+                    this::getRobotPoseEstimate, // Robot pose supplier
+                    this::setOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+                    this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+                    (speeds, feedforwards) -> drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond,
+                            speeds.omegaRadiansPerSecond, false),
+                    // Method that will drive the robot given ROBOT
+                    // RELATIVE ChassisSpeeds. Also optionally outputs
+                    // individual module feedforwards
+                    new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller
+                                                    // for
+                                                    // holonomic drive trains
+                            new PIDConstants(2., 0.0, 0.0), // Translation PID constants
+                            new PIDConstants(2, 0.0, 2) // Rotation PID constants
+                    ),
+                    config, // The robot configuration
+                    () -> {
+                        // Boolean supplier that controls when the path will be mirrored for the red
+                        // alliance
+                        // This will flip the path being followed to the red side of the field.
+                        // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-                var alliance = DriverStation.getAlliance();
-                if (alliance.isPresent()) {
-                    return alliance.get() == DriverStation.Alliance.Red;
-                }
-                return false;
-            },
-            this // Reference to this subsystem to set requirements
-    );
+                        var alliance = DriverStation.getAlliance();
+                        if (alliance.isPresent()) {
+                            return alliance.get() == DriverStation.Alliance.Red;
+                        }
+                        return false;
+                    },
+                    this // Reference to this subsystem to set requirements
+            );
         } catch (Exception e) {
             // Handle exception as needed
             e.printStackTrace();
         }
-
 
     }
 
@@ -149,6 +157,9 @@ public class DriveSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        SmartDashboard.putNumber("X Speed (real)", getChassisSpeeds().vxMetersPerSecond);
+        SmartDashboard.putNumber("Y Speed (real)", getChassisSpeeds().vyMetersPerSecond);
+        SmartDashboard.putNumber("Rot Speed (real)", getChassisSpeeds().omegaRadiansPerSecond);
         // Update the pose estimator with sensor data
         m_poseEstimator.update(
                 m_gyro.getRotation2d(),
@@ -178,12 +189,27 @@ public class DriveSubsystem extends SubsystemBase {
         }
     }
 
+    Rotation2d getRotation2D() {
+        return getRobotPoseEstimate().getRotation();
+    }
+
+    void encoderReset() {
+        m_frontLeft.resetEncoders();
+        m_frontRight.resetEncoders();
+        m_rearLeft.resetEncoders();
+        m_rearRight.resetEncoders();
+
+    }
+
     /**
      * Resets the odometry to the specified pose.
      *
      * @param pose The pose to which to set the odometry.
      */
     public void setOdometry(Pose2d pose) {
+
+        // encoderReset();
+
         m_poseEstimator.resetPosition(
                 m_gyro.getRotation2d(),
                 new SwerveModulePosition[] {
@@ -193,11 +219,11 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearRight.getPosition()
                 },
                 pose);
+
     }
 
-   
     /**
-     * Method to drive the robot using joystick info.
+     * Method to drive the robot using% joystick info.
      *
      * @param xSpeed        Speed of the robot in the x direction (forward).
      * @param ySpeed        Speed of the robot in the y direction (sideways).
@@ -206,79 +232,29 @@ public class DriveSubsystem extends SubsystemBase {
      *                      field.
      * @param rateLimit     Whether to enable rate limiting for smoother control.
      */
-    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
+    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+        SmartDashboard.putNumber("X Speed (passed)", xSpeed);
+        SmartDashboard.putNumber("Y Speed (passed)", ySpeed);
+        SmartDashboard.putNumber("Rot Speed (passed)", rot);
 
-        double xSpeedCommanded;
-        double ySpeedCommanded;
-
-        if (rateLimit) {
-            // Convert XY to polar for rate limiting
-            double inputTranslationDir = Math.atan2(ySpeed, xSpeed);
-            double inputTranslationMag = Math.sqrt(Math.pow(xSpeed, 2) + Math.pow(ySpeed, 2));
-
-            // Calculate the direction slew rate based on an estimate of the lateral
-            // acceleration
-            double directionSlewRate;
-            if (m_currentTranslationMag != 0.0) {
-                directionSlewRate = Math.abs(DriveConstants.kDirectionSlewRate / m_currentTranslationMag);
-            } else {
-                directionSlewRate = 500.0; // some high number that means the slew rate is effectively instantaneous
-            }
-
-            double currentTime = WPIUtilJNI.now() * 1e-6;
-            double elapsedTime = currentTime - m_prevTime;
-            double angleDif = SwerveUtils.AngleDifference(inputTranslationDir, m_currentTranslationDir);
-            if (angleDif < 0.45 * Math.PI) {
-                m_currentTranslationDir = SwerveUtils.StepTowardsCircular(m_currentTranslationDir, inputTranslationDir,
-                        directionSlewRate * elapsedTime);
-                m_currentTranslationMag = m_magLimiter.calculate(inputTranslationMag);
-            } else if (angleDif > 0.85 * Math.PI) {
-                if (m_currentTranslationMag > 1e-4) { // some small number to avoid floating-point errors with equality
-                                                      // checking
-                    // keep currentTranslationDir unchanged
-                    m_currentTranslationMag = m_magLimiter.calculate(0.0);
-                } else {
-                    m_currentTranslationDir = SwerveUtils.WrapAngle(m_currentTranslationDir + Math.PI);
-                    m_currentTranslationMag = m_magLimiter.calculate(inputTranslationMag);
-                }
-            } else {
-                m_currentTranslationDir = SwerveUtils.StepTowardsCircular(m_currentTranslationDir, inputTranslationDir,
-                        directionSlewRate * elapsedTime);
-                m_currentTranslationMag = m_magLimiter.calculate(0.0);
-            }
-            m_prevTime = currentTime;
-
-            xSpeedCommanded = m_currentTranslationMag * Math.cos(m_currentTranslationDir);
-            ySpeedCommanded = m_currentTranslationMag * Math.sin(m_currentTranslationDir);
-            m_currentRotation = m_rotLimiter.calculate(rot);
-
-        } else {
-            xSpeedCommanded = xSpeed;
-            ySpeedCommanded = ySpeed;
-            m_currentRotation = rot;
-        }
-
-
-        @SuppressWarnings("removal")
         var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
                 fieldRelative
-                        ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedCommanded, ySpeedCommanded, m_currentRotation,
-                                m_gyro.getRotation2d())
-                        : new ChassisSpeeds(xSpeedCommanded, ySpeedCommanded, m_currentRotation));
+                        ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot,
+                                getRobotPoseEstimate().getRotation())
+                        : new ChassisSpeeds(xSpeed, ySpeed, rot));
 
         setModuleStates(swerveModuleStates);
     }
 
-
-    public void joystickDrive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
+    public void joystickDrive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
         // Convert the commanded speeds into the correct units for the drivetrain
         double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
         double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
         double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
-    
-        drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative, rateLimit);
+
+        drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
     }
-        
+
     /**
      * Sets the wheels into an X formation to prevent movement.
      */
@@ -319,19 +295,17 @@ public class DriveSubsystem extends SubsystemBase {
     public Pose2d getRobotPoseEstimate() {
         // Returns the estimated robot position (x,y,yaw)
         // WARNING the negating of x & y could cause issues with auto driving
-        return new Pose2d(-m_poseEstimator.getEstimatedPosition().getX(),
-                -m_poseEstimator.getEstimatedPosition().getY(),
+        return new Pose2d(m_poseEstimator.getEstimatedPosition().getX(),
+                m_poseEstimator.getEstimatedPosition().getY(),
                 m_poseEstimator.getEstimatedPosition().getRotation());
     }
 
     public ChassisSpeeds getChassisSpeeds() {
         return DriveConstants.kDriveKinematics.toChassisSpeeds(
-            m_frontLeft.getState(),
-            m_frontRight.getState(),
-            m_rearLeft.getState(),
-            m_rearRight.getState()
-        );
+                m_frontLeft.getState(),
+                m_frontRight.getState(),
+                m_rearLeft.getState(),
+                m_rearRight.getState());
     }
-
 
 }

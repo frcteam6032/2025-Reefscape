@@ -6,13 +6,13 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.RotateToAngle;
-import frc.robot.commands.VisionAssistance;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,7 +30,37 @@ public class RobotContainer {
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.kDriverControllerPort);
 
+
     private final SendableChooser<Command> autoChooser;
+
+
+    private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
+    private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
+    private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(4.);
+
+    private final double baseSpeedPercent = 0.25;
+
+    private double scaleDriverController(double controllerInput, SlewRateLimiter limiter) {
+        return limiter.calculate(
+                controllerInput * (baseSpeedPercent
+                        + m_driverController.getRightTriggerAxis() * (1 - baseSpeedPercent)));
+    }
+
+
+    
+    private double getRotationSpeed() {
+        return scaleDriverController(-m_driverController.getRightX(), thetaLimiter);
+    }
+
+    private double getYSpeed() {
+        return scaleDriverController(-m_driverController.getLeftX(), yLimiter);
+    }
+
+    private double getXSpeed() {
+        return scaleDriverController(-m_driverController.getLeftY(), xLimiter);
+    }
+
+
 
     // https://pathplanner.dev/pplib-triggers.html#pathplannerauto-triggers
     public RobotContainer() {
@@ -51,21 +81,22 @@ public class RobotContainer {
         m_robotDrive.setDefaultCommand(
                 new RunCommand(
                         () -> m_robotDrive.joystickDrive(
-                                -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
-                                true, false),
+                                MathUtil.applyDeadband(getXSpeed(), OIConstants.kDriveDeadband),
+                                MathUtil.applyDeadband(getYSpeed(), OIConstants.kDriveDeadband),
+                                MathUtil.applyDeadband(-getRotationSpeed(), OIConstants.kDriveDeadband),
+                                true),
                         m_robotDrive));
     }
 
     private void configureButtonBindings() {
         // Setting up driver commands
 
-        // Y for assisted targeting
-        m_driverController.y().onTrue(new RotateToAngle(m_robotDrive, () -> -m_driverController.getLeftY(),
-                () -> -m_driverController.getLeftX(), () -> m_limelight.getTX()));
-
+        // Y for angle hold
+        m_driverController.y().toggleOnTrue(new RotateToAngle(m_robotDrive, () -> getXSpeed(),
+                () -> getYSpeed(), () -> m_limelight.getTX()));
+        // Start button to reset odometry
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
+
     }
 
     public double get_display_yaw() {

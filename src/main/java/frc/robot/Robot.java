@@ -80,6 +80,8 @@ public class Robot extends TimedRobot {
     public void update_shuffleboard_odometry_map() {
 
         Pose2d robotPose = m_robotContainer.update_field();
+        SmartDashboard.putNumber("x", robotPose.getX());
+        SmartDashboard.putNumber("y", robotPose.getY());
         field2d.setRobotPose(robotPose);
     }
 
