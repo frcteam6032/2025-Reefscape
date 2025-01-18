@@ -4,17 +4,12 @@
 
 package frc.robot;
 
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.cscore.UsbCamera;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.GenericEntry;
+import com.pathplanner.lib.commands.FollowPathCommand;
+
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.DashboardStore;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -29,25 +24,6 @@ public class Robot extends TimedRobot {
     // Robot methods setup
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
-    // Camera setup
-    private UsbCamera camera = CameraServer.startAutomaticCapture(0);
-    // Set up main tag for driver/operator
-    private ShuffleboardTab tab_competition = Shuffleboard.getTab("Competition");
-    // Odometry visualization setup
-    private Field2d field2d = new Field2d();
-    // LimeLight debug
-    GenericEntry targetFound = tab_competition.add("(LimeLight): Target Focused", false).withSize(4, 4).getEntry();
-    GenericEntry offset_x = tab_competition.add("(LimeLight): Inaccuracy [X]", 0).withSize(4, 4).getEntry();
-    GenericEntry display_yaw = tab_competition.add("YAW", 0).withSize(4, 4).getEntry();
-
-    public void camera_setup() {
-        camera.setResolution(160, 120);
-        tab_competition.add(camera).withSize(6, 4);
-    }
-
-    public void shuffleboard_field_setup() {
-        SmartDashboard.putData("Field Pose", field2d);
-    }
 
     /**
      * This function is run when the robot is first started up and should be used
@@ -61,9 +37,13 @@ public class Robot extends TimedRobot {
         // and set up helper functions
 
         m_robotContainer = new RobotContainer();
-        // Create and add the camera to the shuffleboard
-        camera_setup();
-        shuffleboard_field_setup();
+
+        FollowPathCommand.warmupCommand().schedule();
+
+        // Do this every 100 ms
+        addPeriodic(() -> {
+            DashboardStore.update();
+        }, 0.1);
     }
 
     /**
@@ -76,15 +56,6 @@ public class Robot extends TimedRobot {
      * and
      * SmartDashboard integrated updating.
      */
-
-    public void update_shuffleboard_odometry_map() {
-
-        Pose2d robotPose = m_robotContainer.update_field();
-        SmartDashboard.putNumber("x", robotPose.getX());
-        SmartDashboard.putNumber("y", robotPose.getY());
-        field2d.setRobotPose(robotPose);
-    }
-
     @Override
     public void robotPeriodic() {
         // Runs the Scheduler. This is responsible for polling buttons, adding
@@ -95,7 +66,6 @@ public class Robot extends TimedRobot {
         // robot's periodic
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
-        update_shuffleboard_odometry_map();
     }
 
     /** This function is called once each time the robot enters Disabled mode. */
@@ -137,16 +107,9 @@ public class Robot extends TimedRobot {
         }
     }
 
-    public void update_vision_display() {
-        targetFound.setBoolean(m_robotContainer.display_targetValid());
-        offset_x.setDouble(m_robotContainer.tx());
-        display_yaw.setDouble(m_robotContainer.get_display_yaw());
-    }
-
     /** This function is called periodically during operator control. */
     @Override
     public void teleopPeriodic() {
-        update_vision_display();
     }
 
     @Override

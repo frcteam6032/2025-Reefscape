@@ -12,7 +12,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.DriveSubsystem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class RotateToAngle extends Command {
+public class VisionRotate extends Command {
     DriveSubsystem m_driveSubsystem;
     DoubleSupplier m_speedX;
     DoubleSupplier m_speedY;
@@ -21,14 +21,15 @@ public class RotateToAngle extends Command {
 
     private static final double kP = 0.2;
 
-    /** Creates a new RotateToAngle. */
-    public RotateToAngle(DriveSubsystem driveTrain, DoubleSupplier xSpeed, DoubleSupplier ySpeed,
+    /** Creates a new VisionRotate. */
+    public VisionRotate(DriveSubsystem driveTrain, DoubleSupplier xSpeed, DoubleSupplier ySpeed,
             DoubleSupplier offset) {
         this.m_driveSubsystem = driveTrain;
         this.m_speedX = xSpeed;
         this.m_speedY = ySpeed;
         this.m_offset = offset;
-        // Use addRequirements() here to declare subsystem dependencies.
+
+        addRequirements(driveTrain);
     }
 
     // Called when the command is initially scheduled.
