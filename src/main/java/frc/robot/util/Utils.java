@@ -8,7 +8,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 
 /** Add your docs here. */
 public class Utils {
-    private static final double BASE_SPEED = 0.25;
+    private static final double BASE_SPEED = 0.4;
 
     public static double scaleDriverController(double controllerInput, SlewRateLimiter limiter, double trigger) {
         return limiter.calculate(

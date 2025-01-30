@@ -4,8 +4,9 @@
 
 package frc.robot.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-
+import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -19,6 +20,7 @@ import edu.wpi.first.networktables.NetworkTableValue;
 /** Add your docs here. */
 public final class DashboardStore {
     private static Map<NetworkTableEntry, Supplier<NetworkTableValue>> values = new HashMap<NetworkTableEntry, Supplier<NetworkTableValue>>();
+    private static List<Runnable> custom = new ArrayList<>();
 
     private static NetworkTableEntry smartDashboardEntry(String key) {
         return NetworkTableInstance.getDefault().getEntry("/SmartDashboard/" + key);
@@ -40,9 +42,17 @@ public final class DashboardStore {
         values.put(smartDashboardEntry(key), () -> NetworkTableValue.makeString(value.get()));
     }
 
+    public static void addCustom(Runnable run) {
+        custom.add(run);
+    }
+
     public static void update() {
         values.forEach((key, value) -> {
             key.setValue(value.get());
+        });
+
+        custom.forEach((run) -> {
+            run.run();
         });
     }
 }

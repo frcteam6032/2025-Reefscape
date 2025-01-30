@@ -38,9 +38,10 @@ public class Robot extends TimedRobot {
 
         m_robotContainer = new RobotContainer();
 
+        // Can speed up autons
         FollowPathCommand.warmupCommand().schedule();
 
-        // Do this every 100 ms
+        // Update dashboard values every 100ms
         addPeriodic(() -> {
             DashboardStore.update();
         }, 0.1);

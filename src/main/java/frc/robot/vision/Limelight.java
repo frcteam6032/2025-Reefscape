@@ -14,10 +14,11 @@ import edu.wpi.first.math.geometry.Transform3d;
 public class Limelight extends VisionSystem {
     int targetPipeline = 0;
 
-    private final double TELEOP_MT2_ROTATION_THRESHOLD = 0.5;
-    private final double AUTON_MT2_ROTATION_THRESHOLD = 0.0;
+    // private final double TELEOP_MT2_ROTATION_THRESHOLD = 0.5;
+    // private final double AUTON_MT2_ROTATION_THRESHOLD = 0.0;
 
-    private double angularVelocityThreshold = 0.5; // how many rad/sec to update MT2 pose
+    // private double angularVelocityThreshold = 0.5; // how many rad/sec to update
+    // MT2 pose
 
     public Limelight(String cameraName, Transform3d robotToCamera) {
         super(cameraName, robotToCamera);
@@ -32,9 +33,12 @@ public class Limelight extends VisionSystem {
     }
 
     public Optional<Rotation2d> getTargetX() {
+        // Limelight's TX is inverted compared to the robot;
+        // we want everything in terms of the robot coordinate system.
         if (LimelightHelpers.getTV(cameraName))
             return Optional.of(Rotation2d.fromDegrees(-LimelightHelpers.getLimelightNTDouble(cameraName, "txnc")));
 
+        // we use txnc since it's independent of the crosshair
         return Optional.empty();
     }
 
@@ -48,12 +52,7 @@ public class Limelight extends VisionSystem {
         if (dist.isEmpty() || tx.isEmpty())
             return dist;
 
-        // var compensatedDistance = dist.get() / Math.cos(-tx.get().getRadians());
-
-        // System.out.println("tx: " + tx.get());
-        // System.out.println("Compensated distance: " + compensatedDistance);
-        // System.out.println("======================================================================");
-        return Optional.of(/* compensatedDistance */dist.get() / Math.cos(-tx.get().getRadians()));
+        return Optional.of(dist.get() / Math.cos(-tx.get().getRadians()));
     }
 
     public Optional<Rotation2d> getTargetY() {
@@ -67,17 +66,13 @@ public class Limelight extends VisionSystem {
         return getTargetY();
     }
 
-    public int getTV() {
-        return LimelightHelpers.getTV(cameraName) ? 1 : 0;
-    }
+    // public void setRobotRotationMT2(double degrees) {
+    // LimelightHelpers.SetRobotOrientation(cameraName, degrees, 0, 0, 0, 0, 0);
+    // }
 
-    public void setRobotRotationMT2(double degrees) {
-        LimelightHelpers.SetRobotOrientation(cameraName, degrees, 0, 0, 0, 0, 0);
-    }
-
-    public LimelightHelpers.PoseEstimate getBotposeEstimateMT2() {
-        return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
-    }
+    // public LimelightHelpers.PoseEstimate getBotposeEstimateMT2() {
+    // return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(cameraName);
+    // }
 
     public void setPipeline(int pipeline) {
         LimelightHelpers.setPipelineIndex(cameraName, pipeline);
@@ -92,12 +87,11 @@ public class Limelight extends VisionSystem {
         return (int) LimelightHelpers.getCurrentPipelineIndex(cameraName);
     }
 
-    public void setTeleopMT2Threshold() {
-        angularVelocityThreshold = TELEOP_MT2_ROTATION_THRESHOLD;
-    }
+    // public void setTeleopMT2Threshold() {
+    // angularVelocityThreshold = TELEOP_MT2_ROTATION_THRESHOLD;
+    // }
 
-    
-    public void setAutonMT2Threshold() {
-        angularVelocityThreshold = AUTON_MT2_ROTATION_THRESHOLD;
-    }
+    // public void setAutonMT2Threshold() {
+    // angularVelocityThreshold = AUTON_MT2_ROTATION_THRESHOLD;
+    // }
 }

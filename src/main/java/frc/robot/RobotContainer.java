@@ -76,9 +76,12 @@ public class RobotContainer {
                                 true),
                         m_robotDrive));
 
-        // Y for angle hold
+        /**
+         * Y: Limelight Rotation
+         */
         m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(m_limelight, () -> getXSpeed(),
                 () -> getYSpeed()));
+                
         // Start button to reset odometry
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
 

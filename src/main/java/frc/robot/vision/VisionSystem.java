@@ -6,9 +6,7 @@ import java.util.Optional;
 import org.photonvision.PhotonUtils;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -22,27 +20,6 @@ public class VisionSystem {
     protected final Transform3d offset;
 
     protected static AprilTagFieldLayout layout = null;
-
-    public static final Transform3d LEFT_ROBOT_TO_CAMERA = new Transform3d(Units.inchesToMeters(0.),
-            Units.inchesToMeters(+12.5), Units.inchesToMeters(0.),
-            new Rotation3d(0., Units.degreesToRadians(28.125), Units.degreesToRadians(+150.)));
-
-    public static final Transform3d RIGHT_ROBOT_TO_CAMERA = new Transform3d(Units.inchesToMeters(0.),
-            Units.inchesToMeters(-12.5), Units.inchesToMeters(0.),
-            new Rotation3d(0., Units.degreesToRadians(28.125),
-                    Units.degreesToRadians(-150.)));
-
-    public static final Transform3d SHOOTER_ROBOT_TO_CAMERA = new Transform3d(
-            0.,
-            0.,
-            Units.inchesToMeters(16.75),
-            new Rotation3d(0., Units.degreesToRadians(28.), 0.));
-
-    public static final Transform3d STATIONARY_ROBOT_TO_CAMERA = new Transform3d(
-            0.,
-            0.,
-            Units.inchesToMeters(7.75),
-            new Rotation3d(0., Units.degreesToRadians(19), 0.));
 
     /**
      * Subsystem that handles an attached camera.
@@ -108,14 +85,15 @@ public class VisionSystem {
         double distance = PhotonUtils.calculateDistanceToTargetMeters(
                 offset.getZ(), layout.getTagPose(tagID).get().getZ(), offset.getRotation().getY(),
                 pitch.get().getRadians());
-                // System.out.println("====================================================");
-                // System.out.println("offset.getZ: " + offset.getZ());
-                // System.out.println("layout.getTagPose: " + layout.getTagPose(tagID).get().getZ());
-                // System.out.println("camera pitch: " + offset.getRotation().getY());
-                // System.out.println("Tag pitch: " + pitch.get().getRadians());
-                // System.out.println("DISTANCE CALCULATION: " + distance);
 
-        return Optional.of(distance);
+        Optional<Rotation2d> tx = getTargetX();
+
+        if (tx.isEmpty()) {
+            return Optional.of(distance);
+        }
+
+        // compensate for rotation
+        return Optional.of(distance / Math.cos(-tx.get().getRadians()));
     }
 
     public void setPipeline(int pipelineIndex) {

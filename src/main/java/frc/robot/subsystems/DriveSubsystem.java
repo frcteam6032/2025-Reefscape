@@ -15,22 +15,27 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ModuleConstants;
 import frc.robot.util.DashboardStore;
 import frc.robot.vision.VisionSystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.system.plant.DCMotor;
 
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -72,6 +77,8 @@ public class DriveSubsystem extends SubsystemBase {
     // Telemetry
     private final Field2d m_field = new Field2d();
 
+    private Rotation2d m_rotationTarget = new Rotation2d();
+
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
         m_gyro = new Pigeon2(15); // Pigeon is on CAN Bus with device ID 15
@@ -93,8 +100,11 @@ public class DriveSubsystem extends SubsystemBase {
 
         // Load the RobotConfig from the GUI settings. You should probably
         // store this in your Constants file
-        RobotConfig config;// = new RobotConfig(74, 6.8, new ModuleConfig(null, null, m_currentRotation,
-                           // null, null, 0), new Translation2d(0, 0));
+        ModuleConfig moduleConfig = new ModuleConfig(ModuleConstants.kWheelDiameterMeters / 2,
+                DriveConstants.kMaxSpeedMetersPerSecond, 1.2, DCMotor.getNEO(1), ModuleConstants.kDrivingMotorReduction,
+                1);
+        RobotConfig config = new RobotConfig(70, 6.8, moduleConfig, DriveConstants.kDriveKinematics.getModules());
+
         try {
             config = RobotConfig.fromGUISettings();
 
@@ -103,8 +113,7 @@ public class DriveSubsystem extends SubsystemBase {
                     this::getRobotPoseEstimate, // Robot pose supplier
                     this::setOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
                     this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                    (speeds, feedforwards) -> drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond,
-                            speeds.omegaRadiansPerSecond, false),
+                    (speeds, feedforwards) -> drive(speeds, false),
                     // Method that will drive the robot given ROBOT
                     // RELATIVE ChassisSpeeds. Also optionally outputs
                     // individual module feedforwards
@@ -147,6 +156,11 @@ public class DriveSubsystem extends SubsystemBase {
         DashboardStore.add("Y (meters)", () -> getRobotPoseEstimate().getY());
 
         DashboardStore.add("Heading (deg)", () -> getHeading());
+
+        DashboardStore.addCustom(() -> {
+            m_field.setRobotPose(getRobotPoseEstimate());
+            SmartDashboard.putData("Field", m_field);
+        });
     }
 
     @Override
@@ -160,29 +174,6 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearLeft.getPosition(),
                         m_rearRight.getPosition()
                 });
-
-        m_field.setRobotPose(getRobotPoseEstimate());
-        SmartDashboard.putData("Field", m_field);
-
-        // TODO: this should be a command
-        // // Use vision measurement if available
-        // if (m_visionSubsystem != null && m_visionSubsystem.isTargetValid()) {
-        // double[] botPoseArray = m_visionSubsystem.getBotPose(); // TODO change here
-        // too
-        // if (botPoseArray.length == 6) {
-        // double x = botPoseArray[0]; // Meters
-        // double y = botPoseArray[1];
-        // double yaw = botPoseArray[5]; // Degrees
-        // Pose2d visionPose = new Pose2d(x, y, Rotation2d.fromDegrees(yaw));
-
-        // // Adjust the timestamp for latency
-        // double latency = m_visionSubsystem.getLatency();
-        // double visionCaptureTime = Timer.getFPGATimestamp() - (latency / 1000.0);
-
-        // // Add the vision measurement to the pose estimator
-        // m_poseEstimator.addVisionMeasurement(visionPose, visionCaptureTime);
-        // }
-        // }
     }
 
     Rotation2d getRotation2D() {
@@ -203,9 +194,6 @@ public class DriveSubsystem extends SubsystemBase {
      * @param pose The pose to which to set the odometry.
      */
     public void setOdometry(Pose2d pose) {
-
-        // encoderReset();
-
         m_poseEstimator.resetPosition(
                 m_gyro.getRotation2d(),
                 new SwerveModulePosition[] {
@@ -215,24 +203,18 @@ public class DriveSubsystem extends SubsystemBase {
                         m_rearRight.getPosition()
                 },
                 pose);
-
     }
 
     /**
-     * Method to drive the robot using% joystick info.
+     * Method to drive the robot.
      *
      * @param xSpeed        Speed of the robot in the x direction (forward).
      * @param ySpeed        Speed of the robot in the y direction (sideways).
      * @param rot           Angular rate of the robot.
      * @param fieldRelative Whether the provided x and y speeds are relative to the
      *                      field.
-     * @param rateLimit     Whether to enable rate limiting for smoother control.
      */
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-        SmartDashboard.putNumber("X Speed (passed)", xSpeed);
-        SmartDashboard.putNumber("Y Speed (passed)", ySpeed);
-        SmartDashboard.putNumber("Rot Speed (passed)", rot);
-
         var swerveModuleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(
                 fieldRelative
                         ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot,
@@ -242,6 +224,15 @@ public class DriveSubsystem extends SubsystemBase {
         setModuleStates(swerveModuleStates);
     }
 
+    /**
+     * Method to drive the robot via the joystick.
+     *
+     * @param xSpeed        Speed of the robot in the x direction (forward).
+     * @param ySpeed        Speed of the robot in the y direction (sideways).
+     * @param rot           Angular rate of the robot.
+     * @param fieldRelative Whether the provided x and y speeds are relative to the
+     *                      field.
+     */
     public void joystickDrive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
         // Convert the commanded speeds into the correct units for the drivetrain
         double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
@@ -249,6 +240,17 @@ public class DriveSubsystem extends SubsystemBase {
         double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
 
         drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
+    }
+
+    /**
+     * Method to drive the robot using chassis speeds.
+     *
+     * @param speeds        The target {@link ChassisSpeeds}.
+     * @param fieldRelative Whether the provided x and y speeds are relative to the
+     *                      field.
+     */
+    public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
+        drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative);
     }
 
     /**
@@ -304,34 +306,69 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState());
     }
 
+    /**
+     * Rotate based on a provided offset.
+     * 
+     * @param xSpeed      The joystick X speed.
+     * @param ySpeed      The joystick Y speed.
+     * @param offset      Provides the offset.
+     * @param validTarget Whether or not the offset is valid.
+     * @return A command that rotates based on the offset.
+     */
     public Command rotateOffsetCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed,
-            DoubleSupplier offset) {
-        PIDController controller = new PIDController(ROTATE_kP, getHeading(), getHeading());
-        controller.enableContinuousInput(-180, 180);
+            Supplier<Rotation2d> offset, BooleanSupplier validTarget) {
 
-        return run(() -> {
-            joystickDrive(
-                    xSpeed.getAsDouble(), ySpeed.getAsDouble(),
-                    controller.calculate(offset.getAsDouble() / DriveConstants.kMaxAngularSpeed),
-                    true);
-        }).finallyDo(controller::reset);
+        // This only updates the rotation target IF there's a valid target.
+        // rotateToAngleCommand uses a rotation target, NOT an offset.
+        // So here we convert the vision offset to a rotational target only if
+        // the target is valid.
+        return Commands.run(() -> {
+            if (validTarget.getAsBoolean()) {
+                m_rotationTarget = offset.get().plus(getRotation2D());
+            }
+        }).alongWith(rotateToAngleCommand(xSpeed, ySpeed, () -> m_rotationTarget))
+                .beforeStarting(() -> m_rotationTarget = new Rotation2d());
     }
 
+    /**
+     * Rotate via a Vision System.
+     * 
+     * @param vision What vision system to use.
+     * @param xSpeed The joystick X speed.
+     * @param ySpeed The joystick Y speed.
+     * @return A command that rotates according to the vision system's offset.
+     */
     public Command visionRotateCommand(VisionSystem vision, DoubleSupplier xSpeed, DoubleSupplier ySpeed) {
         return rotateOffsetCommand(xSpeed, ySpeed, () -> {
             Optional<Rotation2d> rot = vision.getTargetX();
             if (rot.isPresent()) {
-                return rot.get().getDegrees();
+                return rot.get();
             } else {
-                return 0;
+                return new Rotation2d();
             }
-        });
+        }, vision::getHasTarget);
     }
 
+    /**
+     * Rotates the robot to an angle.
+     * 
+     * @param xSpeed The joystick X speed.
+     * @param ySpeed The joystick Y speed.
+     * @param target Provides the target to rotate to.
+     * @return A command that rotates the robot to the specified angle.
+     */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
-        return rotateOffsetCommand(xSpeed, ySpeed, () -> {
+        PIDController controller = new PIDController(ROTATE_kP, 0.0, 0.0);
+        controller.enableContinuousInput(-180, 180);
+
+        return run(() -> {
             Rotation2d targetRotation = target.get();
-            return targetRotation.minus(getRotation2D()).getDegrees();
-        });
+            double offset = targetRotation.minus(getRotation2D()).getDegrees();
+
+            joystickDrive(
+                    xSpeed.getAsDouble(), ySpeed.getAsDouble(),
+                    controller.calculate(offset) / DriveConstants.kMaxAngularSpeed,
+                    true);
+        }).finallyDo(controller::reset);
     }
 }
