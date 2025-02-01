@@ -8,6 +8,7 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
@@ -86,8 +87,18 @@ public class DriveSubsystem extends SubsystemBase {
     // Reference to the VisionSubsystem
     private VisionSubsystem m_visionSubsystem;
 
+    private PIDController yawController;
+
+
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
+
+        double kP = 0.04;
+        double kD = 0.0034;
+
+        yawController = new PIDController(kP, 0, kD);
+        yawController.enableContinuousInput(-180, 180);
+        yawController.setTolerance(2);
 
         m_gyro = new Pigeon2(15); // Pigeon is on CAN Bus with device ID 15
         m_gyro.setYaw(0);
@@ -118,7 +129,7 @@ public class DriveSubsystem extends SubsystemBase {
                     this::getRobotPoseEstimate, // Robot pose supplier
                     this::setOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
                     this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                    (speeds, feedforwards) -> drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond,
+                    (speeds, feedforwards) -> setRobotVelocitiesDriver(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond,
                             speeds.omegaRadiansPerSecond, false),
                     // Method that will drive the robot given ROBOT
                     // RELATIVE ChassisSpeeds. Also optionally outputs
@@ -160,6 +171,7 @@ public class DriveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("X Speed (real)", getChassisSpeeds().vxMetersPerSecond);
         SmartDashboard.putNumber("Y Speed (real)", getChassisSpeeds().vyMetersPerSecond);
         SmartDashboard.putNumber("Rot Speed (real)", getChassisSpeeds().omegaRadiansPerSecond);
+        SmartDashboard.putData("Heading PID", yawController);
         // Update the pose estimator with sensor data
         m_poseEstimator.update(
                 m_gyro.getRotation2d(),
@@ -187,6 +199,7 @@ public class DriveSubsystem extends SubsystemBase {
                 m_poseEstimator.addVisionMeasurement(visionPose, visionCaptureTime);
             }
         }
+        // yawController.calculate(m_currentRotation);
     }
 
     Rotation2d getRotation2D() {
@@ -232,7 +245,7 @@ public class DriveSubsystem extends SubsystemBase {
      *                      field.
      * @param rateLimit     Whether to enable rate limiting for smoother control.
      */
-    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+    private void setRobotVelocitiesDriver(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
         SmartDashboard.putNumber("X Speed (passed)", xSpeed);
         SmartDashboard.putNumber("Y Speed (passed)", ySpeed);
         SmartDashboard.putNumber("Rot Speed (passed)", rot);
@@ -252,8 +265,28 @@ public class DriveSubsystem extends SubsystemBase {
         double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
         double rotDelivered = rot * DriveConstants.kMaxAngularSpeed;
 
-        drive(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
+        setRobotVelocitiesDriver(xSpeedDelivered, ySpeedDelivered, rotDelivered, fieldRelative);
     }
+
+    public void setYawControllerSetpoint(double setPoint) {
+        yawController.setSetpoint(setPoint);
+    }
+
+    public void setPointRelative(double offset) {
+        yawController.setSetpoint(yawController.getSetpoint() + offset);
+    }
+
+    public void drivePIDHeading(double xSpeed, double ySpeed, boolean fieldRelative) {
+         double xSpeedDelivered = xSpeed * DriveConstants.kMaxSpeedMetersPerSecond;
+         double ySpeedDelivered = ySpeed * DriveConstants.kMaxSpeedMetersPerSecond;
+         double output = yawController.calculate(getHeading());
+         output = MathUtil.clamp(output, DriveConstants.kYawHeadingMinRate, DriveConstants.kYawHeadingMaxRate);
+         setRobotVelocitiesDriver(xSpeedDelivered, ySpeedDelivered, -output * DriveConstants.kMaxAngularSpeed, fieldRelative);
+    }
+
+
+
+
 
     /**
      * Sets the wheels into an X formation to prevent movement.

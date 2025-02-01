@@ -34,6 +34,9 @@ public final class Constants {
     public static final double kMagnitudeSlewRate = 1.8; // percent per second (1 = 100%)
     public static final double kRotationalSlewRate = 2.0; // percent per second (1 = 100%)
 
+    public static final double kYawHeadingMaxRate = 0.7;
+    public static final double kYawHeadingMinRate = -kYawHeadingMaxRate;
+
     // Chassis configuration
     public static final double kTrackWidth = Units.inchesToMeters(26.5);
     // Distance between centers of right and left wheels on robot
@@ -146,5 +149,7 @@ public final class Constants {
   public static final class NeoMotorConstants {
     public static final double kFreeSpeedRpm = 5676;
   }
+
+  
 
 }

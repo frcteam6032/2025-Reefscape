@@ -1,5 +1,7 @@
 package frc.robot;
 
+import org.opencv.core.Mat;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -13,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.RotateToAngle;
+import frc.robot.commands.VisionAlignment;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,6 +32,7 @@ public class RobotContainer {
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.kDriverControllerPort);
+            
 
 
     private final SendableChooser<Command> autoChooser;
@@ -49,15 +53,15 @@ public class RobotContainer {
 
     
     private double getRotationSpeed() {
-        return scaleDriverController(-m_driverController.getRightX(), thetaLimiter);
+        return scaleDriverController(-MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband), thetaLimiter);
     }
 
     private double getYSpeed() {
-        return scaleDriverController(-m_driverController.getLeftX(), yLimiter);
+        return scaleDriverController(-MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband), yLimiter);
     }
 
     private double getXSpeed() {
-        return scaleDriverController(-m_driverController.getLeftY(), xLimiter);
+        return scaleDriverController(-MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband), xLimiter);
     }
 
 
@@ -81,9 +85,9 @@ public class RobotContainer {
         m_robotDrive.setDefaultCommand(
                 new RunCommand(
                         () -> m_robotDrive.joystickDrive(
-                                MathUtil.applyDeadband(getXSpeed(), OIConstants.kDriveDeadband),
-                                MathUtil.applyDeadband(getYSpeed(), OIConstants.kDriveDeadband),
-                                MathUtil.applyDeadband(-getRotationSpeed(), OIConstants.kDriveDeadband),
+                                getXSpeed(),
+                                getYSpeed(),
+                               -getRotationSpeed(),
                                 true),
                         m_robotDrive));
     }
@@ -92,9 +96,12 @@ public class RobotContainer {
         // Setting up driver commands
 
         // Y for angle hold
-        m_driverController.y().toggleOnTrue(new RotateToAngle(m_robotDrive, () -> getXSpeed(),
-                () -> getYSpeed(), () -> m_limelight.getTX()));
-        // Start button to reset odometry
+        m_driverController.y().toggleOnTrue(new VisionAlignment(m_robotDrive, () -> getXSpeed(),
+        () -> getYSpeed(), () -> -m_limelight.getTX(), () -> m_limelight.isTargetValid(), () -> getRotationSpeed() * 35));
+
+        m_driverController.rightStick().whileTrue(new RotateToAngle(m_robotDrive, () -> getXSpeed(),
+                () -> getYSpeed(), () -> Math.atan2(m_driverController.getRightX(), m_driverController.getRightY()) * (180/Math.PI)));
+        // Start button to reset odomet
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
 
     }
