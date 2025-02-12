@@ -4,12 +4,18 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import frc.robot.Constants.ModuleConstants;
 
 public final class Configs {
     public static final class MAXSwerveModule {
         public static final SparkMaxConfig drivingConfig = new SparkMaxConfig();
         public static final SparkMaxConfig turningConfig = new SparkMaxConfig();
+        public static final SparkMaxConfig algaeIntakeMotorConfig = new SparkMaxConfig();
+        public static final SparkMaxConfig algaePivotMotorConfig = new SparkMaxConfig();
+        public static final SparkMaxConfig coralIntakeConfig = new SparkMaxConfig();
+        public static final SparkMaxConfig coralPivotConfig = new SparkMaxConfig();
+        public static final SparkMaxConfig elevatorConfig = new SparkMaxConfig();
 
         static {
             // Use module constants to calculate conversion factors and feed forward gain.
@@ -17,6 +23,33 @@ public final class Configs {
                     / ModuleConstants.kDrivingMotorReduction;
             double turningFactor = 2 * Math.PI;
             double drivingVelocityFeedForward = 1 / ModuleConstants.kDriveWheelFreeSpeedRps;
+
+
+            algaeIntakeMotorConfig
+                    .idleMode(IdleMode.kBrake)
+                    .inverted(false);
+
+           
+            algaePivotMotorConfig
+                    .idleMode(IdleMode.kBrake)
+                    .inverted(false);
+
+            coralIntakeConfig
+                    .idleMode(IdleMode.kBrake)
+                    .inverted(false);
+
+            coralPivotConfig
+                    .idleMode(IdleMode.kBrake)
+                    .inverted(false);
+
+            elevatorConfig
+                    .idleMode(IdleMode.kBrake)
+                    .smartCurrentLimit(50)
+                    .inverted(false);
+
+
+
+
 
             drivingConfig
                     .idleMode(IdleMode.kBrake)
