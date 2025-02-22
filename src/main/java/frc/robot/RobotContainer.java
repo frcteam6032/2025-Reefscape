@@ -73,7 +73,7 @@ public class RobotContainer {
                         () -> m_robotDrive.joystickDrive(
                                 getXSpeed(),
                                 getYSpeed(),
-                                -getRotationSpeed(),
+                                getRotationSpeed(),
                                 true),
                         m_robotDrive));
 

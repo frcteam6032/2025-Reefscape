@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ModuleConstants;
 import frc.robot.util.DashboardStore;
@@ -81,7 +82,7 @@ public class DriveSubsystem extends SubsystemBase {
 
     /** Creates a new DriveSubsystem. */
     public DriveSubsystem() {
-        m_gyro = new Pigeon2(15); // Pigeon is on CAN Bus with device ID 15
+        m_gyro = new Pigeon2(Constants.DriveConstants.kGyroCanId);
         m_gyro.setYaw(0);
 
         // Initialize the pose estimator
@@ -154,6 +155,11 @@ public class DriveSubsystem extends SubsystemBase {
 
         DashboardStore.add("X (meters)", () -> getRobotPoseEstimate().getX());
         DashboardStore.add("Y (meters)", () -> getRobotPoseEstimate().getY());
+
+        DashboardStore.add("FL Angle", () -> m_frontLeft.getPosition().angle.getDegrees());
+        DashboardStore.add("FR Angle", () -> m_frontRight.getPosition().angle.getDegrees());
+        DashboardStore.add("BL Angle", () -> m_rearLeft.getPosition().angle.getDegrees());
+        DashboardStore.add("BR Angle", () -> m_rearRight.getPosition().angle.getDegrees());
 
         DashboardStore.add("Heading (deg)", () -> getHeading());
 
