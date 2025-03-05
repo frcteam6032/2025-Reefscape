@@ -1,29 +1,45 @@
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.ElevatorPosition;
 import frc.robot.Constants.OIConstants;
+import frc.robot.subsystems.CoralInfeed;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.AlgaeInfeed;
+import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.util.Utils;
 import frc.robot.vision.Limelight;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
+    private final CoralInfeed m_coralInfeed = new CoralInfeed();
+    private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
+    private final AlgaeInfeed m_algae = new AlgaeInfeed();
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.kDriverControllerPort);
+    // Create operator controller 
+    private final CommandXboxController m_operatorController = new CommandXboxController(
+            OIConstants.kOperatorControllerPort);
+
 
     private SendableChooser<Command> autoChooser;
 
@@ -53,10 +69,17 @@ public class RobotContainer {
         // Put subsystem woth the method in it
         // NamedCommands.registerCommand("autoBalance", swerve.autoBalanceCommand());
 
+        configureNamedCommands();
+
         // Configure the buttons & default commands
         configureButtonBindings();
 
         // Config buttons
+    }
+
+    private void configureNamedCommands() {
+        NamedCommands.registerCommand("L1 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
+        NamedCommands.registerCommand("Score", m_coralInfeed.intakeCommand(-0.5));
     }
 
     private void initAutoChooser() {
@@ -86,6 +109,24 @@ public class RobotContainer {
         m_driverController.rightStick().whileTrue(m_robotDrive.rotateToAngleCommand(() -> getXSpeed(),
                 () -> getYSpeed(),
                 () -> new Rotation2d(Math.atan2(m_driverController.getRightX(), m_driverController.getRightY()))));
+
+
+        m_operatorController.povUp().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.FeederStation));
+        m_operatorController.povDown().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level1));
+        m_operatorController.povDownLeft().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level2));
+        m_operatorController.povRight().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level3));
+        // Coral 
+        m_operatorController.leftBumper().whileTrue(m_coralInfeed.runPivotCommand(0.5));
+        m_operatorController.rightBumper().whileTrue(m_coralInfeed.runPivotCommand(-0.5));
+        m_operatorController.a().whileTrue(m_coralInfeed.intakeCommand(0.5));
+        m_operatorController.y().whileTrue(m_coralInfeed.intakeCommand(-0.5));
+        // Algae 
+        m_operatorController.x().whileTrue(m_algae.runPivotCommand(0.5));
+        m_operatorController.b().whileTrue(m_algae.runPivotCommand(-0.5));
+        m_operatorController.leftTrigger(0.1).whileTrue(m_algae.intakeCommand(0.1));
+        m_operatorController.rightTrigger(0.1).whileTrue(m_algae.intakeCommand(-0.1));
+
+
 
         // Start button to reset odometry
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));

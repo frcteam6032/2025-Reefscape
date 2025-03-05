@@ -1,6 +1,7 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ElevatorPosition;
@@ -15,10 +16,12 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.LimitSwitchConfig;
 import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 public class ElevatorSubsystem extends SubsystemBase {
     private static final int CAN_ID = -1;
@@ -35,10 +38,14 @@ public class ElevatorSubsystem extends SubsystemBase {
             .forwardSoftLimit(MAX_POS_INCHES * INCHES_TO_ROT).reverseSoftLimit(MIN_POS_INCHES * INCHES_TO_ROT)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
+            private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
+            .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(true);
+
     private static final SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
             .smartCurrentLimit(50)
             .inverted(false)
-            .apply(SOFT_LIMITS);
+            .apply(SOFT_LIMITS)
+            .apply(LIMIT_SWITCH);
 
     private double m_target = 0;
 
@@ -51,6 +58,7 @@ public class ElevatorSubsystem extends SubsystemBase {
                 CONFIG,
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
+
     }
 
     private void set(double speed) {
@@ -89,5 +97,4 @@ public class ElevatorSubsystem extends SubsystemBase {
     public BooleanSupplier inRangeSupplier() {
         return this::inRange;
     }
-
 }

@@ -55,7 +55,7 @@ public class CoralInfeed extends SubsystemBase {
     private DutyCycleEncoder m_absoluteEncoder;
 
     public CoralInfeed() {
-         m_absoluteEncoder = new DutyCycleEncoder(0);
+        m_absoluteEncoder = new DutyCycleEncoder(0);
 
         m_pivotMotor.configure(PIVOT_CONFIG, ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
@@ -115,5 +115,4 @@ public class CoralInfeed extends SubsystemBase {
     public void resetEncoder() {
         m_encoder.setPosition(m_absoluteEncoder.get() * ABS_REL);
     }
-
 }
