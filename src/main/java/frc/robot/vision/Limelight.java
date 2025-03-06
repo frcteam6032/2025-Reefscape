@@ -70,8 +70,12 @@ public class Limelight extends SubsystemBase {
         return m_limelightTable.getEntry("tid").getDouble(0);
     }
 
-    public boolean getCorrectionStatus() {
+    public boolean getYawCorrectionStatus() {
         return Math.abs(getTX()) < 1.0;
+    }
+
+    public boolean getDistanceCorrectionStatus() {
+        return Math.abs(getDistance()) < 1.0;
     }
 
 }
