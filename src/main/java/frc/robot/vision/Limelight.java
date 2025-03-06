@@ -61,9 +61,12 @@ public class Limelight extends SubsystemBase {
     }
 
     public double getDistance() {
-        // Use robotPose
-        // TODO: Implement distance calculation
+        // Using the height of the target and the height of the camera, we can calculate
+        // the distance
+        // to the target using the formula:
+        // distance = (targetHeight - cameraHeight) / tan(cameraAngle + targetAngle)
         return 0;
+
     }
 
     public double getTagId() {
