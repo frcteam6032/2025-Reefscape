@@ -43,7 +43,6 @@ public class CoralManagement {
         return Commands.runOnce(() -> cyclePosition());
     }
 
-
     public static Command cycleAndRunToPositionCommand() {
         return cyclePositionsCommand().andThen(runToPositionCommand(targetPosition));
     }
@@ -68,6 +67,13 @@ public class CoralManagement {
 
     public static Command runToPositionCommand(ElevatorPosition desiredPosition) {
         return infeed.runToPositionCommand(desiredPosition).alongWith(elevator.runToPositionCommand(desiredPosition));
+    }
+
+    public static Command automaticElevatorCommand(boolean resolved) {
+        if (resolved == true) {
+            return runToPositionCommand(ElevatorPosition.Level2);
+        }
+        return null;
     }
 
 }

@@ -78,4 +78,10 @@ public class Limelight extends SubsystemBase {
         return Math.abs(getDistance()) < 1.0;
     }
 
+    public boolean positionResolved() {
+        // After the computer thinks it is aligned, it can assist the driver by moving
+        // the elevator up automatically
+        return getYawCorrectionStatus() && getDistanceCorrectionStatus();
+    }
+
 }
