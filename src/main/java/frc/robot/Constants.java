@@ -134,21 +134,5 @@ public final class Constants {
         public static final double kFreeSpeedRpm = 5676;
     }
 
-    public enum ElevatorPosition {
-        FeederStation(-1, -1),
-        Level1(-1, -1),
-        Level2(41.8, 200),
-        Level3(57.3, 200),
-        Level4(-1, -1);
-
-        public double Height;
-        public double Angle;
-
-        // Height: Inches, Agle: Degrees
-        ElevatorPosition(double height, double angle) {
-            this.Height = height;
-            this.Angle = angle;
-        };
-    }
 
 }

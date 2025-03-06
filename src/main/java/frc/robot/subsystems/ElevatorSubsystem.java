@@ -4,7 +4,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.ElevatorPosition;
+import frc.robot.util.CoralManagement.ElevatorPosition;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
