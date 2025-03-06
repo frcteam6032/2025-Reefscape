@@ -11,12 +11,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Constants.ElevatorPosition;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.CoralInfeed;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.AlgaeInfeed;
 import frc.robot.subsystems.ElevatorSubsystem;
+import frc.robot.util.CoralManagement;
 import frc.robot.util.Utils;
 import frc.robot.vision.Limelight;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,10 +36,9 @@ public class RobotContainer {
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.kDriverControllerPort);
-    // Create operator controller 
+    // Create operator controller
     private final CommandXboxController m_operatorController = new CommandXboxController(
             OIConstants.kOperatorControllerPort);
-
 
     private SendableChooser<Command> autoChooser;
 
@@ -66,6 +65,8 @@ public class RobotContainer {
     public RobotContainer() {
         initAutoChooser();
 
+        CoralManagement.init(m_coralInfeed, m_elevator);
+
         // Put subsystem woth the method in it
         // NamedCommands.registerCommand("autoBalance", swerve.autoBalanceCommand());
 
@@ -78,7 +79,8 @@ public class RobotContainer {
     }
 
     private void configureNamedCommands() {
-        NamedCommands.registerCommand("L1 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
+        // NamedCommands.registerCommand("L1 Pivot",
+        // m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
         NamedCommands.registerCommand("Score", m_coralInfeed.intakeCommand(-0.5));
     }
 
@@ -100,6 +102,7 @@ public class RobotContainer {
                                 true),
                         m_robotDrive));
 
+        // Driver
         /**
          * Y: Limelight Rotation
          */
@@ -110,23 +113,23 @@ public class RobotContainer {
                 () -> getYSpeed(),
                 () -> new Rotation2d(Math.atan2(m_driverController.getRightX(), m_driverController.getRightY()))));
 
+        m_driverController.leftTrigger(0.1).whileTrue(m_coralInfeed.intakeCommand(0.5));
+        m_driverController.leftBumper().whileTrue(m_coralInfeed.intakeCommand(-0.5));
+        m_driverController.x().onTrue(m_robotDrive.setXCommand());
 
-        m_operatorController.povUp().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.FeederStation));
-        m_operatorController.povDown().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level1));
-        m_operatorController.povDownLeft().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level2));
-        m_operatorController.povRight().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level3));
-        // Coral 
+        // Operator
+        m_operatorController.povUp().onTrue(m_elevator.runElevatorCommand(0.2));
+        m_operatorController.povDown().onTrue(m_elevator.runElevatorCommand(-0.2));
+        // Coral
         m_operatorController.leftBumper().whileTrue(m_coralInfeed.runPivotCommand(0.5));
         m_operatorController.rightBumper().whileTrue(m_coralInfeed.runPivotCommand(-0.5));
-        m_operatorController.a().whileTrue(m_coralInfeed.intakeCommand(0.5));
-        m_operatorController.y().whileTrue(m_coralInfeed.intakeCommand(-0.5));
-        // Algae 
+        m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
+
+        // Algae
         m_operatorController.x().whileTrue(m_algae.runPivotCommand(0.5));
         m_operatorController.b().whileTrue(m_algae.runPivotCommand(-0.5));
         m_operatorController.leftTrigger(0.1).whileTrue(m_algae.intakeCommand(0.1));
         m_operatorController.rightTrigger(0.1).whileTrue(m_algae.intakeCommand(-0.1));
-
-
 
         // Start button to reset odometry
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
