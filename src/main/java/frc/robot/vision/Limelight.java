@@ -66,4 +66,12 @@ public class Limelight extends SubsystemBase {
         return 0;
     }
 
+    public double getTagId() {
+        return m_limelightTable.getEntry("tid").getDouble(0);
+    }
+
+    public boolean getCorrectionStatus() {
+        return Math.abs(getTX()) < 1.0;
+    }
+
 }
