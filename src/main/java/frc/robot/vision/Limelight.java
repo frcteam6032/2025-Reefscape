@@ -41,7 +41,7 @@ public class Limelight extends SubsystemBase {
     }
 
     // Estimates in order: x, y, z, roll, pitch, yaw
-    public Pose2d getBotPose() { 
+    public Pose2d getBotPose() {
         var botPose = m_limelightTable.getEntry("botpose_wpiblue").getDoubleArray(new double[6]);
         return new Pose2d(botPose[0], botPose[1], Rotation2d.fromDegrees(botPose[5]));
     }
@@ -58,6 +58,12 @@ public class Limelight extends SubsystemBase {
         // True = left, false = right
         // Negate to correct side
         return -getTX() < 0 ? true : false;
+    }
+
+    public double getDistance() {
+        // Use robotPose
+        // TODO: Implement distance calculation
+        return 0;
     }
 
 }

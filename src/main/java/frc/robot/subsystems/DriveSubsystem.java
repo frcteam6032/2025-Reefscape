@@ -333,6 +333,16 @@ public class DriveSubsystem extends SubsystemBase {
         return Commands.runOnce(() -> sideAlignment(error, side));
     }
 
+    private void distanceCorrection(double currentDistance) {
+        if (currentDistance > 1) {
+            joystickDrive(0, 0.1, 0, false);
+        }
+    }
+
+    public Command distanceCorrectionCommand(double currentDistance) {
+        return Commands.runOnce(() -> distanceCorrection(currentDistance));
+    }
+
     /**
      * Rotate based on a provided offset.
      * 
