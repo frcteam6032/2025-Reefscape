@@ -103,7 +103,7 @@ public class RobotContainer {
                         m_robotDrive));
 
         // Driver
-        // Limelight YAW alignment 
+        // Limelight YAW alignment
         m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(m_limelight, () -> getXSpeed(),
                 () -> getYSpeed()));
 
@@ -114,6 +114,8 @@ public class RobotContainer {
         m_driverController.leftTrigger(0.1).whileTrue(m_coralInfeed.intakeCommand(0.5));
         m_driverController.leftBumper().whileTrue(m_coralInfeed.intakeCommand(-0.5));
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
+        m_driverController.rightBumper()
+                .whileTrue(m_robotDrive.sideAlignmentCommand(Math.abs(m_limelight.getTX()), m_limelight.getSide()));
 
         // Operator
         m_operatorController.povUp().onTrue(m_elevator.runElevatorCommand(0.2));

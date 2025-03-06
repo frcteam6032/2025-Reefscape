@@ -11,6 +11,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Limelight extends SubsystemBase {
@@ -39,7 +41,7 @@ public class Limelight extends SubsystemBase {
     }
 
     // Estimates in order: x, y, z, roll, pitch, yaw
-    public Pose2d getBotPose() { // TODO change to return a Pose2d
+    public Pose2d getBotPose() { 
         var botPose = m_limelightTable.getEntry("botpose_wpiblue").getDoubleArray(new double[6]);
         return new Pose2d(botPose[0], botPose[1], Rotation2d.fromDegrees(botPose[5]));
     }
@@ -51,4 +53,11 @@ public class Limelight extends SubsystemBase {
         return tl + cl;
 
     }
+
+    public boolean getSide() {
+        // True = left, false = right
+        // Negate to correct side
+        return -getTX() < 0 ? true : false;
+    }
+
 }

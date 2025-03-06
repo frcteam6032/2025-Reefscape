@@ -316,6 +316,23 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState());
     }
 
+    private void sideAlignment(double error, boolean side) {
+        // Pass in absolute value of error
+        if (error > 5) {
+            if (side == true) {
+                // Go right
+                joystickDrive(0.1, 0, 0, false);
+            } else {
+                // Go left
+                joystickDrive(-0.1, 0, 0, false);
+            }
+        }
+    }
+
+    public Command sideAlignmentCommand(double error, boolean side) {
+        return Commands.runOnce(() -> sideAlignment(error, side));
+    }
+
     /**
      * Rotate based on a provided offset.
      * 
@@ -349,7 +366,8 @@ public class DriveSubsystem extends SubsystemBase {
      * @return A command that rotates according to the vision system's offset.
      */
     public Command visionRotateCommand(Limelight vision, DoubleSupplier xSpeed, DoubleSupplier ySpeed) {
-        return rotateOffsetCommand(xSpeed, ySpeed, () -> Rotation2d.fromDegrees(-vision.getTX()), vision::isTargetValid);
+        return rotateOffsetCommand(xSpeed, ySpeed, () -> Rotation2d.fromDegrees(-vision.getTX()),
+                vision::isTargetValid);
     }
 
     /**
