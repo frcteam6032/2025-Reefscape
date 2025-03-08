@@ -330,7 +330,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     public Command sideAlignmentCommand(double error, boolean side) {
-        return Commands.runOnce(() -> sideAlignment(error, side));
+        return runOnce(() -> sideAlignment(error, side));
     }
 
     private void distanceCorrection(double currentDistance) {
@@ -340,7 +340,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     public Command distanceCorrectionCommand(double currentDistance) {
-        return Commands.runOnce(() -> distanceCorrection(currentDistance));
+        return runOnce(() -> distanceCorrection(currentDistance));
     }
 
     /**

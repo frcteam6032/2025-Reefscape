@@ -18,6 +18,7 @@ import frc.robot.subsystems.AlgaeInfeed;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.util.CoralManagement;
 import frc.robot.util.Utils;
+import frc.robot.util.CoralManagement.ElevatorPosition;
 import frc.robot.vision.Limelight;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -123,6 +124,7 @@ public class RobotContainer {
         // Operator
         m_operatorController.povUp().onTrue(m_elevator.runElevatorCommand(0.2));
         m_operatorController.povDown().onTrue(m_elevator.runElevatorCommand(-0.2));
+        m_operatorController.povLeft().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.FeederStation));
         // Coral
         m_operatorController.leftBumper().whileTrue(m_coralInfeed.runPivotCommand(0.5));
         m_operatorController.rightBumper().whileTrue(m_coralInfeed.runPivotCommand(-0.5));

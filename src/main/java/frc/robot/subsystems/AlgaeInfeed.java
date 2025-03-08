@@ -4,6 +4,8 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+import java.util.function.BooleanSupplier;
+
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -13,6 +15,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class AlgaeInfeed extends SubsystemBase {
     private static final int PIVOT_ID = -1;
@@ -36,9 +39,18 @@ public class AlgaeInfeed extends SubsystemBase {
                 PersistMode.kPersistParameters);
         m_intakeMotor.configure(INTAKE_CONFIG, ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
+
+        SmartDashboard.putNumber("Pivot Angle", m_absoluteEncoder.get());
+        SmartDashboard.putNumber("Pivot Position", m_pivotMotor.getEncoder().getPosition());
+        SmartDashboard.putNumber("Pivot Velocity", m_pivotMotor.getEncoder().getVelocity());
+        SmartDashboard.putNumber("Intake Position", m_intakeMotor.getEncoder().getPosition());
+        SmartDashboard.putNumber("Intake Velocity", m_intakeMotor.getEncoder().getVelocity());
+        SmartDashboard.putNumber("Intake Current", m_intakeMotor.getOutputCurrent());
+        SmartDashboard.putNumber("Pivot Current", m_pivotMotor.getOutputCurrent());
+
     }
 
-    private boolean angleInRange() {
+    private boolean inRange() {
         return m_absoluteEncoder.get() > MIN_ANGLE && m_absoluteEncoder.get() < MAX_ANGLE ? true : false;
     }
 
@@ -46,8 +58,12 @@ public class AlgaeInfeed extends SubsystemBase {
         return runOnce(() -> runPivot(value));
     }
 
+    public BooleanSupplier inRangeSupplier() {
+        return this::inRange;
+    }
+
     private void runPivot(double value) {
-        if (angleInRange()) {
+        if (inRangeSupplier().getAsBoolean()) {
             m_pivotMotor.set(value);
         }
     }
@@ -67,4 +83,5 @@ public class AlgaeInfeed extends SubsystemBase {
     public Command stopIntakeCommand() {
         return intakeCommand(0.0);
     }
+
 }

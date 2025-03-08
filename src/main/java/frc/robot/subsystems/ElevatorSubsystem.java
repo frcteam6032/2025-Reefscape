@@ -2,6 +2,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.CoralManagement.ElevatorPosition;
@@ -38,7 +39,7 @@ public class ElevatorSubsystem extends SubsystemBase {
             .forwardSoftLimit(MAX_POS_INCHES * INCHES_TO_ROT).reverseSoftLimit(MIN_POS_INCHES * INCHES_TO_ROT)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
-            private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
+    private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
             .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(true);
 
     private static final SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
@@ -51,6 +52,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private final SparkFlex m_motor = new SparkFlex(CAN_ID, MotorType.kBrushless);
     private final SparkClosedLoopController m_pid = m_motor.getClosedLoopController();
+
     private final RelativeEncoder m_encoder = m_motor.getEncoder();
 
     public ElevatorSubsystem() {
@@ -59,6 +61,11 @@ public class ElevatorSubsystem extends SubsystemBase {
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
 
+        SmartDashboard.putBoolean("IS IN RANGE", inRangeSupplier().getAsBoolean());
+        SmartDashboard.putNumber("ELEVATOR POSITION", positionSupplier().getAsDouble());
+        SmartDashboard.putNumber("ELEVATOR TARGET", m_target);
+        SmartDashboard.putNumber("ELEVATOR SPEED", m_motor.getAppliedOutput());
+        SmartDashboard.putNumber("ELEVATOR ENCODER", m_encoder.getPosition());
     }
 
     private void set(double speed) {
