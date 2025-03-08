@@ -119,6 +119,8 @@ public class RobotContainer {
                 .whileTrue(
                         m_robotDrive.sideAlignmentCommand(Math.abs(m_limelight.getTX()), () -> m_limelight.getSide()));
         m_driverController.b().whileTrue(m_robotDrive.distanceCorrectionCommand(m_limelight.getDistance()));
+        m_driverController.a()
+                .whileTrue(m_robotDrive.reefScoreCorrection());
         // m_driverController.a()
         // .toggleOnTrue(CoralManagement.automaticElevatorCommand(m_limelight.positionResolved()));
 

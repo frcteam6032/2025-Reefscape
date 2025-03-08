@@ -151,21 +151,63 @@ public class DriveSubsystem extends SubsystemBase {
         setupDashboard();
     }
 
-    public Command reefScoreCorrection() {
+    public Command turnToNearest60Degrees() {
+        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
+        controller.enableContinuousInput(-180, 180);
+        // controller.setTolerance(5);
         return Commands.run(() -> {
+            double currentAngle = getHeading();
+            double nearest60 = Math.round(currentAngle / 60) * 60;
+            SmartDashboard.putNumber("Nearest 60", nearest60);
+            double error = -currentAngle + nearest60;
+
+            if (Math.abs(error) > 1) {
+                joystickDrive(0, 0, controller.calculate(error) / DriveConstants.kMaxAngularSpeed, true);
+            } else {
+                joystickDrive(0, 0, 0, true);
+            }
+        }, this);
+    }
+
+    public Command turnToNext60() {
+        return Commands.run(() -> {
+            double currentAngle = getHeading();
+            double next60 = Math.ceil(currentAngle + 60 / 60) * 60;
+            double error = currentAngle - next60 + 60;
+
+            if (Math.abs(error) > 1) {
+                joystickDrive(0, 0, error * ROTATE_kP, true);
+            } else {
+                joystickDrive(0, 0, 0, true);
+            }
+        }, this);
+    }
+
+    public Command reefScoreCorrection() {
+        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
+        controller.enableContinuousInput(-180, 180);
+
+        return Commands.run(() -> {
+            double currentAngle = getHeading();
+            double currentMultiple = Math.round(currentAngle / 60) * 60;
+            double rotOffset = currentAngle - currentMultiple;
+
             if (m_limelight.isTargetValid()) {
+
                 // Get the horizontal offset from the center of the tag.
                 // This value is between -30 and 30 degrees.
                 double offset = -m_limelight.getTX();
                 if (Math.abs(offset) > 5) {
+
                     double strafeSpeed = 0.1 * Math.signum(offset);
 
-                    joystickDrive(0.1, strafeSpeed, 0, false);
+                    joystickDrive(0.1, strafeSpeed,
+                            controller.calculate(rotOffset) / DriveConstants.kMaxAngularSpeed, false);
                 } else {
                     joystickDrive(0.1, 0, 0, false);
                 }
             }
-        }, this);
+        }, this).finallyDo(controller::reset);
     }
 
     private void setupDashboard() {
