@@ -41,8 +41,8 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 public class DriveSubsystem extends SubsystemBase {
-    private static final double ROTATE_kP = 0.04;
-    private static final double ROTATE_kD = 0.0034;
+    private static final double ROTATE_kP = 0.22;
+    private static final double ROTATE_kD = 0.006;
 
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -67,6 +67,9 @@ public class DriveSubsystem extends SubsystemBase {
 
     // The gyro sensor
     private final Pigeon2 m_gyro;
+
+    // The Limelight vision system
+    private final Limelight m_limelight = new Limelight();
 
     // Odometry class for tracking robot pose
     private final SwerveDrivePoseEstimator m_poseEstimator;
@@ -114,7 +117,7 @@ public class DriveSubsystem extends SubsystemBase {
                     this::getRobotPoseEstimate, // Robot pose supplier
                     this::setOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
                     this::getChassisSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                    (speeds, feedforwards) -> drive(speeds, false),
+                    (speeds, feedforwards) -> driveAuto(speeds, false),
                     // Method that will drive the robot given ROBOT
                     // RELATIVE ChassisSpeeds. Also optionally outputs
                     // individual module feedforwards
@@ -146,6 +149,23 @@ public class DriveSubsystem extends SubsystemBase {
         }
 
         setupDashboard();
+    }
+
+    public Command reefScoreCorrection() {
+        return Commands.run(() -> {
+            if (m_limelight.isTargetValid()) {
+                // Get the horizontal offset from the center of the tag.
+                // This value is between -30 and 30 degrees.
+                double offset = -m_limelight.getTX();
+                if (Math.abs(offset) > 5) {
+                    double strafeSpeed = 0.1 * Math.signum(offset);
+
+                    joystickDrive(0.1, strafeSpeed, 0, false);
+                } else {
+                    joystickDrive(0.1, 0, 0, false);
+                }
+            }
+        }, this);
     }
 
     private void setupDashboard() {
@@ -255,7 +275,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @param fieldRelative Whether the provided x and y speeds are relative to the
      *                      field.
      */
-    public void drive(ChassisSpeeds speeds, boolean fieldRelative) {
+    public void driveAuto(ChassisSpeeds speeds, boolean fieldRelative) {
         drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, fieldRelative);
     }
 
@@ -316,21 +336,25 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState());
     }
 
-    private void sideAlignment(double error, boolean side) {
+    private void sideAlignment(double error, BooleanSupplier side) {
         // Pass in absolute value of error
-        if (error > 5) {
-            if (side == true) {
+
+        if (m_limelight.isTargetValid() == false) {
+            return;
+        }
+        if (error > 0) {
+            if (side.getAsBoolean() == false) {
                 // Go right
-                joystickDrive(0.1, 0, 0, false);
+                joystickDrive(0, -0.1, 0, false);
             } else {
                 // Go left
-                joystickDrive(-0.1, 0, 0, false);
+                joystickDrive(0, 0.1, 0, false);
             }
         }
     }
 
-    public Command sideAlignmentCommand(double error, boolean side) {
-        return runOnce(() -> sideAlignment(error, side));
+    public Command sideAlignmentCommand(double error, BooleanSupplier side) {
+        return run(() -> sideAlignment(error, side));
     }
 
     private void distanceCorrection(double currentDistance) {

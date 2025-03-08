@@ -28,9 +28,6 @@ public class Robot extends TimedRobot {
     // Robot methods setup
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
-    private RelativeEncoder m_ElevatorEncoder;
-    private SparkMax m_Elevatormotor;
-    private Double m_target;
 
     /**
      * This function is run when the robot is first started up and should be used
@@ -45,8 +42,6 @@ public class Robot extends TimedRobot {
 
         m_robotContainer = new RobotContainer();
 
-        m_Elevatormotor = new SparkMax(0, MotorType.kBrushless);
-        m_ElevatorEncoder = m_Elevatormotor.getEncoder();
 
         // Can speed up autons
         FollowPathCommand.warmupCommand().schedule();
