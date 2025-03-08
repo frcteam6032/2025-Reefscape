@@ -61,11 +61,6 @@ public class ElevatorSubsystem extends SubsystemBase {
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
 
-        SmartDashboard.putBoolean("IS IN RANGE", inRangeSupplier().getAsBoolean());
-        SmartDashboard.putNumber("ELEVATOR POSITION", positionSupplier().getAsDouble());
-        SmartDashboard.putNumber("ELEVATOR TARGET", m_target);
-        SmartDashboard.putNumber("ELEVATOR SPEED", m_motor.getAppliedOutput());
-        SmartDashboard.putNumber("ELEVATOR ENCODER", m_encoder.getPosition());
     }
 
     private void set(double speed) {
@@ -103,5 +98,16 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public BooleanSupplier inRangeSupplier() {
         return this::inRange;
+    }
+
+    public DoubleSupplier targetSupplier() {
+        return () -> m_target;
+    }
+
+    @Override
+    public void periodic() {
+        SmartDashboard.putNumber("ELEVATOR TARGET", m_target);
+        SmartDashboard.putNumber("ELEVATOR SPEED", m_motor.get());
+        SmartDashboard.putNumber("ELEVATOR ENCODER", m_encoder.getPosition());
     }
 }

@@ -40,14 +40,6 @@ public class AlgaeInfeed extends SubsystemBase {
         m_intakeMotor.configure(INTAKE_CONFIG, ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
 
-        SmartDashboard.putNumber("Pivot Angle", m_absoluteEncoder.get());
-        SmartDashboard.putNumber("Pivot Position", m_pivotMotor.getEncoder().getPosition());
-        SmartDashboard.putNumber("Pivot Velocity", m_pivotMotor.getEncoder().getVelocity());
-        SmartDashboard.putNumber("Intake Position", m_intakeMotor.getEncoder().getPosition());
-        SmartDashboard.putNumber("Intake Velocity", m_intakeMotor.getEncoder().getVelocity());
-        SmartDashboard.putNumber("Intake Current", m_intakeMotor.getOutputCurrent());
-        SmartDashboard.putNumber("Pivot Current", m_pivotMotor.getOutputCurrent());
-
     }
 
     private boolean inRange() {
@@ -83,5 +75,10 @@ public class AlgaeInfeed extends SubsystemBase {
     public Command stopIntakeCommand() {
         return intakeCommand(0.0);
     }
+
+    @Override
+    public void periodic() {
+    SmartDashboard.putNumber("ALGAE PICKUP PIVOT", m_absoluteEncoder.get());
+  }
 
 }

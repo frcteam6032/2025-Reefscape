@@ -22,6 +22,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class CoralInfeed extends SubsystemBase {
     private static final int PIVOT_ID = -1;
@@ -114,5 +115,10 @@ public class CoralInfeed extends SubsystemBase {
 
     public void resetEncoder() {
         m_encoder.setPosition(m_absoluteEncoder.get() * ABS_REL);
+    }
+
+    @Override
+    public void periodic() {
+        SmartDashboard.getNumber("CORAL PICKUP PIVOT", m_absoluteEncoder.get());
     }
 }

@@ -5,8 +5,12 @@
 package frc.robot;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.DashboardStore;
@@ -24,6 +28,9 @@ public class Robot extends TimedRobot {
     // Robot methods setup
     private Command m_autonomousCommand;
     private RobotContainer m_robotContainer;
+    private RelativeEncoder m_ElevatorEncoder;
+    private SparkMax m_Elevatormotor;
+    private Double m_target;
 
     /**
      * This function is run when the robot is first started up and should be used
@@ -38,8 +45,20 @@ public class Robot extends TimedRobot {
 
         m_robotContainer = new RobotContainer();
 
+        m_Elevatormotor = new SparkMax(0, MotorType.kBrushless);
+        m_ElevatorEncoder = m_Elevatormotor.getEncoder();
+
         // Can speed up autons
         FollowPathCommand.warmupCommand().schedule();
+
+        // Elevator
+        SmartDashboard.putNumber("ELEVATOR TARGET", 0);
+        SmartDashboard.putNumber("ELEVATOR SPEED", 0);
+        SmartDashboard.putNumber("ELEVATOR ENCODER", 0);
+        // Coral pickup
+        SmartDashboard.putNumber("CORAL PICKUP PIVOT", 0);
+        // Algae pickup
+        SmartDashboard.putNumber("ALGAE PICKUP PIVOT", 0);
 
         // Update dashboard values every 100ms
         addPeriodic(() -> {
