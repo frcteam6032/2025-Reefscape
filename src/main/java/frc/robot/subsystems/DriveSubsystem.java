@@ -387,14 +387,12 @@ public class DriveSubsystem extends SubsystemBase {
             return;
         }
 
+        PIDController controller = new PIDController(0.1, 0.0, 0.005);
+        // controller.enableContinuousInput(-180, 180);
+
         if (Math.abs(error.getAsDouble()) > 1.5) {
-            if (side.getAsBoolean() == false) {
-                // Go right
-                joystickDrive(0, -0.1, 0, false);
-            } else {
-                // Go left
-                joystickDrive(0, 0.1, 0, false);
-            }
+            joystickDrive(0, -controller.calculate(error.getAsDouble()) / DriveConstants.kMaxSpeedMetersPerSecond, 0,
+                    false);
         }
     }
 
