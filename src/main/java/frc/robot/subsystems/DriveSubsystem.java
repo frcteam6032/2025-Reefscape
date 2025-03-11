@@ -152,6 +152,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     public Command turnToNearest60Degrees() {
+        @SuppressWarnings("resource")
         PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
         controller.enableContinuousInput(-180, 180);
         // controller.setTolerance(5);
@@ -184,6 +185,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
 
     public Command reefScoreCorrection() {
+        @SuppressWarnings("resource")
         PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
         controller.enableContinuousInput(-180, 180);
 
@@ -455,6 +457,7 @@ public class DriveSubsystem extends SubsystemBase {
      * @return A command that rotates the robot to the specified angle.
      */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
+        @SuppressWarnings("resource")
         PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
         controller.enableContinuousInput(-180, 180);
 

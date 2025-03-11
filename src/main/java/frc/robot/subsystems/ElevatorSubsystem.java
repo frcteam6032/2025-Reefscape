@@ -1,10 +1,10 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.DashboardStore;
 import frc.robot.util.CoralManagement.ElevatorPosition;
 
 import java.util.function.BooleanSupplier;
@@ -17,6 +17,7 @@ import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.LimitSwitchConfig;
 import com.revrobotics.spark.config.SoftLimitConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
@@ -25,6 +26,15 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 public class ElevatorSubsystem extends SubsystemBase {
+    /* TMP: PID Constants */
+    private boolean enablePIDTuning = false;
+
+    private double kP = 0.1;
+    private double kD = 0.0;
+    private double kFF = 0.0;
+    private double kMaxOutput = 0.3;
+    private double kMinOutput = -0.3;
+
     private static final int CAN_ID = -1;
 
     private static final double INCHES_TO_ROT = -1;
@@ -42,7 +52,9 @@ public class ElevatorSubsystem extends SubsystemBase {
     private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
             .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(true);
 
-    private static final SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
+    private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
+
+    private SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
             .smartCurrentLimit(50)
             .inverted(false)
             .apply(SOFT_LIMITS)
@@ -61,6 +73,36 @@ public class ElevatorSubsystem extends SubsystemBase {
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
 
+        setupDashboard();
+
+        if (enablePIDTuning) {
+            // display PID coefficients on SmartDashboard
+            SmartDashboard.putNumber("Elevator P", kP);
+            SmartDashboard.putNumber("Elevator D", kD);
+            SmartDashboard.putNumber("Elevator FF", kFF);
+            SmartDashboard.putNumber("Elevator Max", kMaxOutput);
+            SmartDashboard.putNumber("Elevator Min", kMinOutput);
+
+            reapplyPID();
+        }
+    }
+
+    private void reapplyPID() {
+        closedLoopConfig.pidf(kP, 0.0, kD, kFF);
+        closedLoopConfig.maxOutput(kMaxOutput);
+        closedLoopConfig.minOutput(kMinOutput);
+
+        CONFIG.apply(closedLoopConfig);
+        m_motor.configure(
+                CONFIG,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+    }
+
+    private void setupDashboard() {
+        DashboardStore.add("Elevator Target", targetSupplier());
+        DashboardStore.add("Elevator Velocity", m_encoder::getVelocity);
+        DashboardStore.add("Elevator Position", m_encoder::getPosition);
     }
 
     private void set(double speed) {
@@ -106,8 +148,32 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
-        SmartDashboard.putNumber("ELEVATOR TARGET", m_target);
-        SmartDashboard.putNumber("ELEVATOR SPEED", m_motor.get());
-        SmartDashboard.putNumber("ELEVATOR ENCODER", m_encoder.getPosition());
+        if (enablePIDTuning) {
+            double p = SmartDashboard.getNumber("Elevator P", kP);
+            double d = SmartDashboard.getNumber("Elevator D", kD);
+            double ff = SmartDashboard.getNumber("Elevator FF", kFF);
+            double max = SmartDashboard.getNumber("Elevator Max", kMaxOutput);
+            double min = SmartDashboard.getNumber("Elevator Min", kMinOutput);
+
+            // if PID coefficients on SmartDashboard have changed, write new values to
+            // controller
+            if ((p != kP)) {
+                kP = p;
+                reapplyPID();
+            }
+            if ((d != kD)) {
+                kD = d;
+                reapplyPID();
+            }
+            if ((ff != kFF)) {
+                kFF = ff;
+                reapplyPID();
+            }
+            if ((max != kMaxOutput) || (min != kMinOutput)) {
+                kMinOutput = min;
+                kMaxOutput = max;
+                reapplyPID();
+            }
+        }
     }
 }
