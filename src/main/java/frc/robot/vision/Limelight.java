@@ -7,20 +7,16 @@
 
 package frc.robot.vision;
 
-import java.util.function.BooleanSupplier;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
-public class Limelight extends SubsystemBase {
+public class Limelight {
     private final NetworkTable m_limelightTable;
 
     /**
-     * Creates a new VisionSubsystem.
+     * Creates a new Limelight.
      */
     public Limelight() {
         m_limelightTable = NetworkTableInstance.getDefault().getTable("limelight");
