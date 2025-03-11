@@ -79,6 +79,8 @@ public class RobotContainer {
     }
 
     private void configureNamedCommands() {
+        // TODO: This will contain all auto named commands.
+        
         // NamedCommands.registerCommand("L1 Pivot",
         // m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
         // NamedCommands.registerCommand("Score", m_coralInfeed.intakeCommand(-0.5));

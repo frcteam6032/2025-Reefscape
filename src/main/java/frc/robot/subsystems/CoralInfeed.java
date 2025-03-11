@@ -54,9 +54,15 @@ public class CoralInfeed extends SubsystemBase {
 
     private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
 
-    private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(false);
-    private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(false);
-    // .apply(SOFT_LIMITS);
+    private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
+            .idleMode(IdleMode.kBrake)
+            .inverted(false)
+            .smartCurrentLimit(20);
+
+    private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
+            .idleMode(IdleMode.kBrake)
+            .inverted(false)
+            .smartCurrentLimit(30); // .apply(SOFT_LIMITS);
 
     private final SparkMax m_pivotMotor = new SparkMax(PIVOT_ID, MotorType.kBrushless);
     private final SparkMax m_intakeMotor = new SparkMax(INTAKE_ID, MotorType.kBrushless);
@@ -104,7 +110,6 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     /** Pivot Commands */
-
     public Command runToPositionCommand(ElevatorPosition position) {
         return runOnce(() -> runToPosition(position));
     }
@@ -114,6 +119,7 @@ public class CoralInfeed extends SubsystemBase {
         m_pid.setReference(m_target * DEG_TO_ROT, ControlType.kPosition);
     }
 
+    /** Encoder */
     private double getPosition() {
         return m_encoder.getPosition();
     }
@@ -130,6 +136,7 @@ public class CoralInfeed extends SubsystemBase {
         return this::inRange;
     }
 
+    /** Vbus Commands */
     public Command runPivotCommand(double value) {
         return runOnce(() -> runPivot(value));
     }
@@ -143,7 +150,6 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     /** Intake Commands */
-
     public Command intakeCommand(double value) {
         return runOnce(() -> intake(value));
     }

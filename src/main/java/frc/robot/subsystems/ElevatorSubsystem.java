@@ -56,7 +56,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
             .smartCurrentLimit(50)
-            .inverted(false)
+            .inverted(true)
             .apply(SOFT_LIMITS)
             .apply(LIMIT_SWITCH);
 
@@ -105,6 +105,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         DashboardStore.add("Elevator Position", m_encoder::getPosition);
     }
 
+    /** Vbus Commands */
     private void set(double speed) {
         m_motor.set(speed);
     }
@@ -117,6 +118,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         return runElevatorCommand(0.0);
     }
 
+    /** PID Commands */
     public Command runToPositionCommand(ElevatorPosition position) {
         return runOnce(() -> runToPosition(position));
     }
@@ -126,6 +128,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         m_pid.setReference(m_target * INCHES_TO_ROT, ControlType.kPosition);
     }
 
+    /** Encoder & Target */
     private double getPosition() {
         return m_encoder.getPosition();
     }

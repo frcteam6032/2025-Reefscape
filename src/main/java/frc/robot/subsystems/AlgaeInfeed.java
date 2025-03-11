@@ -56,8 +56,15 @@ public class AlgaeInfeed extends SubsystemBase {
 
     private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
 
-    private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(false);
-    private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake).inverted(false);
+    private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
+            .idleMode(IdleMode.kBrake)
+            .inverted(false)
+            .smartCurrentLimit(20);
+
+    private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
+            .idleMode(IdleMode.kBrake)
+            .inverted(false)
+            .smartCurrentLimit(30);
     // .apply(SOFT_LIMITS);
 
     private final SparkMax m_pivotMotor = new SparkMax(PIVOT_ID, MotorType.kBrushless);
@@ -123,6 +130,7 @@ public class AlgaeInfeed extends SubsystemBase {
         m_pid.setReference(m_target * DEG_TO_ROT, ControlType.kPosition);
     }
 
+    /** Vbus Commands */
     public Command runPivotCommand(double value) {
         return runOnce(() -> runPivot(value));
     }
