@@ -193,6 +193,8 @@ public class AlgaeInfeed extends SubsystemBase {
             double max = SmartDashboard.getNumber("Algae Max", kMaxOutput);
             double min = SmartDashboard.getNumber("Algae Min", kMinOutput);
 
+            
+
             // if PID coefficients on SmartDashboard have changed, write new values to
             // controller
             if ((p != kP)) {
