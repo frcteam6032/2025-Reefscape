@@ -43,6 +43,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 public class DriveSubsystem extends SubsystemBase {
     private static final double ROTATE_kP = 0.22;
     private static final double ROTATE_kD = 0.006;
+    private static final double ALIGNMENT_DEADBAND = 1.5;
 
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -380,13 +381,13 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState());
     }
 
-    private void sideAlignment(double error, BooleanSupplier side) {
-        // Pass in absolute value of error
+    private void sideAlignment(DoubleSupplier error, BooleanSupplier side) {
 
         if (m_limelight.isTargetValid() == false) {
             return;
         }
-        if (error > 0) {
+
+        if (Math.abs(error.getAsDouble()) > 1.5) {
             if (side.getAsBoolean() == false) {
                 // Go right
                 joystickDrive(0, -0.1, 0, false);
@@ -397,7 +398,7 @@ public class DriveSubsystem extends SubsystemBase {
         }
     }
 
-    public Command sideAlignmentCommand(double error, BooleanSupplier side) {
+    public Command sideAlignmentCommand(DoubleSupplier error, BooleanSupplier side) {
         return run(() -> sideAlignment(error, side));
     }
 
