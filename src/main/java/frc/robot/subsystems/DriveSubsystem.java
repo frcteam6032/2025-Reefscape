@@ -381,7 +381,7 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState());
     }
 
-    private void sideAlignment(DoubleSupplier error, BooleanSupplier side) {
+    private void sideAlignment(DoubleSupplier error) {
 
         if (m_limelight.isTargetValid() == false) {
             return;
@@ -396,8 +396,8 @@ public class DriveSubsystem extends SubsystemBase {
         }
     }
 
-    public Command sideAlignmentCommand(DoubleSupplier error, BooleanSupplier side) {
-        return run(() -> sideAlignment(error, side));
+    public Command sideAlignmentCommand(DoubleSupplier error) {
+        return run(() -> sideAlignment(error));
     }
 
     private void distanceCorrection(double currentDistance) {
