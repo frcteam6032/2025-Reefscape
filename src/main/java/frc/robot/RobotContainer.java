@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants.OIConstants;
-
+import frc.robot.commands.ReefScoreCorrectionCommand;
 import frc.robot.subsystems.AlgaeInfeed;
 import frc.robot.subsystems.CoralInfeed;
 import frc.robot.subsystems.DriveSubsystem;
@@ -42,6 +42,8 @@ public class RobotContainer {
             OIConstants.kOperatorControllerPort);
 
     private SendableChooser<Command> autoChooser;
+
+    private final Command reefScore = new ReefScoreCorrectionCommand(m_robotDrive, m_limelight);
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
@@ -134,7 +136,7 @@ public class RobotContainer {
         m_driverController.b().whileTrue(m_robotDrive.distanceCorrectionCommand(
                 m_limelight.getDistance()));
         m_driverController.a()
-                .whileTrue(m_robotDrive.reefScoreCorrection());
+                .whileTrue(reefScore);
         /*
          * m_driverController.a()
          * .toggleOnTrue(CoralManagement.automaticElevatorCommand(m_limelight.

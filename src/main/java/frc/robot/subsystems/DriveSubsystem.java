@@ -41,8 +41,8 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 public class DriveSubsystem extends SubsystemBase {
-    private static final double ROTATE_kP = 0.22;
-    private static final double ROTATE_kD = 0.006;
+    public static final double ROTATE_kP = 0.22;
+    public static final double ROTATE_kD = 0.006;
     private static final double ALIGNMENT_DEADBAND = 1.5;
 
     // Create MAXSwerveModules
@@ -168,7 +168,7 @@ public class DriveSubsystem extends SubsystemBase {
             } else {
                 joystickDrive(0, 0, 0, true);
             }
-        }, this);
+        }, DriveSubsystem.this);
     }
 
     public Command turnToNext60() {
@@ -185,33 +185,6 @@ public class DriveSubsystem extends SubsystemBase {
         }, this);
     }
 
-    public Command reefScoreCorrection() {
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        controller.enableContinuousInput(-180, 180);
-
-        return Commands.run(() -> {
-            double currentAngle = getHeading();
-            double currentMultiple = Math.round(currentAngle / 60) * 60;
-            double rotOffset = currentAngle - currentMultiple;
-
-            if (m_limelight.isTargetValid()) {
-
-                // Get the horizontal offset from the center of the tag.
-                // This value is between -30 and 30 degrees.
-                double offset = -m_limelight.getTX();
-                if (Math.abs(offset) > 5) {
-
-                    double strafeSpeed = 0.1 * Math.signum(offset);
-
-                    joystickDrive(0.1, strafeSpeed,
-                            controller.calculate(rotOffset) / DriveConstants.kMaxAngularSpeed, false);
-                } else {
-                    joystickDrive(0.1, 0, 0, false);
-                }
-            }
-        }, this).finallyDo(controller::reset);
-    }
 
     private void setupDashboard() {
         DashboardStore.add("X Velocity", () -> getChassisSpeeds().vxMetersPerSecond);
