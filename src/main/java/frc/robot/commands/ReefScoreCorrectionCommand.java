@@ -48,7 +48,6 @@ public class ReefScoreCorrectionCommand extends Command {
     }
     // Called every time the scheduler runs while the command is scheduled.
 
-    // This is our accurate automatic intake system A.A.I.S
     @Override
     public void execute() {
 
@@ -102,13 +101,6 @@ public class ReefScoreCorrectionCommand extends Command {
                 -backupVectorY * speedScaling + (-m_trimValue.getAsDouble() * 0.2),
                 rotationCommand,
                 false);
-        // } else {
-        // m_driveSubsystem.joystickDrive(
-        // -0.03,
-        // -m_trimValue.getAsDouble() * 0.1,
-        // rotationCommand,
-        // false);
-        // }
     }
 
     // Called once the command ends or is interrupted.
