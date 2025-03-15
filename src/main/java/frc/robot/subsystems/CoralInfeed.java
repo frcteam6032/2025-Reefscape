@@ -27,25 +27,26 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class CoralInfeed extends SubsystemBase {
     /* TMP: PID Constants */
-    private boolean enablePIDTuning = false;
+    private boolean enablePIDTuning = true;
 
     private double kP = 0.1;
     private double kD = 0.0;
     private double kFF = 0.0;
-    private double kMaxOutput = 0.3;
-    private double kMinOutput = -0.3;
+    private double kMaxOutput = 0.4;
+    private double kMinOutput = -0.4;
 
-    private static final int PIVOT_ID = -1;
-    private static final int INTAKE_ID = -1;
+    private static final int PIVOT_ID = 11;
+    private static final int INTAKE_ID = 12;
 
-    private static final int MAX_ANGLE = -1;
-    private static final int MIN_ANGLE = -1;
+    // 270 - 0
+    private static final int MAX_ANGLE = 250;
+    private static final int MIN_ANGLE = 5;
 
     // Degrees
     private static final double POSITION_THRESHOLD = 5;
 
     // TODO: Get actual gear ratio
-    private static final double ROT_TO_DEG = 360 / 3;
+    private static final double ROT_TO_DEG = 360 / 60;
     private static final double DEG_TO_ROT = 1 / ROT_TO_DEG;
 
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
@@ -56,13 +57,13 @@ public class CoralInfeed extends SubsystemBase {
 
     private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
-            .inverted(false)
-            .smartCurrentLimit(20);
+            .inverted(true)
+            .smartCurrentLimit(40);
 
     private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(false)
-            .smartCurrentLimit(30); // .apply(SOFT_LIMITS);
+            .smartCurrentLimit(40).apply(SOFT_LIMITS);
 
     private final SparkMax m_pivotMotor = new SparkMax(PIVOT_ID, MotorType.kBrushless);
     private final SparkMax m_intakeMotor = new SparkMax(INTAKE_ID, MotorType.kBrushless);
@@ -93,6 +94,8 @@ public class CoralInfeed extends SubsystemBase {
 
             reapplyPID();
         }
+
+        m_encoder.setPosition(0.0);
     }
 
     private void reapplyPID() {

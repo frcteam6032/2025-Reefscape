@@ -47,9 +47,9 @@ public class CoralManagement {
 
     public static enum ElevatorPosition {
         Home(0, 0),
-        FeederStation(-1, -1),
+        FeederStation(0.0, 47),
         Level1(-1, -1),
-        Level2(41.8, 200),
+        Level2(41.8, 150),
         Level3(57.3, 200),
         Level4(-1, -1);
 

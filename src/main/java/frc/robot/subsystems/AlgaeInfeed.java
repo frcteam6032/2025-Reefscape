@@ -34,8 +34,8 @@ public class AlgaeInfeed extends SubsystemBase {
     private double kMaxOutput = 0.3;
     private double kMinOutput = -0.3;
 
-    private static final int PIVOT_ID = -1;
-    private static final int INTAKE_ID = -1;
+    private static final int PIVOT_ID = 9;
+    private static final int INTAKE_ID = 10;
 
     private static final int MAX_ANGLE = -1;
     private static final int MIN_ANGLE = -1;
@@ -58,7 +58,7 @@ public class AlgaeInfeed extends SubsystemBase {
 
     private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
-            .inverted(false)
+            .inverted(true)
             .smartCurrentLimit(20);
 
     private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()

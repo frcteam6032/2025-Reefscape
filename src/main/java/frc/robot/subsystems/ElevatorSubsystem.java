@@ -35,29 +35,26 @@ public class ElevatorSubsystem extends SubsystemBase {
     private double kMaxOutput = 0.3;
     private double kMinOutput = -0.3;
 
-    private static final int CAN_ID = -1;
+    private static final int CAN_ID = 13;
 
-    private static final double INCHES_TO_ROT = -1;
-    private static final double ROT_TO_INCHES = 1 / INCHES_TO_ROT;
+    private static final double POSITION_THRESHOLD = 1.5;
 
-    private static final double POSITION_THRESHOLD = 0.25;
-
-    private static final double MAX_POS_INCHES = 53;
-    private static final double MIN_POS_INCHES = 0;
+    private static final double MAX_POS = -1;
+    private static final double MIN_POS = -1;
 
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
-            .forwardSoftLimit(MAX_POS_INCHES * INCHES_TO_ROT).reverseSoftLimit(MIN_POS_INCHES * INCHES_TO_ROT)
+            .forwardSoftLimit(MAX_POS).reverseSoftLimit(MIN_POS)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
-            .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(true);
+            .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(false);
 
     private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
 
     private SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
             .smartCurrentLimit(50)
             .inverted(true)
-            .apply(SOFT_LIMITS)
+            // .apply(SOFT_LIMITS)
             .apply(LIMIT_SWITCH);
 
     private double m_target = 0;
@@ -85,6 +82,8 @@ public class ElevatorSubsystem extends SubsystemBase {
 
             reapplyPID();
         }
+
+        m_encoder.setPosition(0.0);
     }
 
     private void reapplyPID() {
@@ -125,7 +124,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private void runToPosition(ElevatorPosition position) {
         m_target = position.Height;
-        m_pid.setReference(m_target * INCHES_TO_ROT, ControlType.kPosition);
+        m_pid.setReference(m_target, ControlType.kPosition);
     }
 
     /** Encoder & Target */
@@ -138,7 +137,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     private boolean inRange() {
-        return Math.abs(m_target - (getPosition() * ROT_TO_INCHES)) < POSITION_THRESHOLD;
+        return Math.abs(m_target - getPosition()) < POSITION_THRESHOLD;
     }
 
     public BooleanSupplier inRangeSupplier() {
