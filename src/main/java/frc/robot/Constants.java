@@ -48,20 +48,20 @@ public final class Constants {
                 new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
 
         // Angular offsets of the modules relative to the chassis in radians
-        public static final double kFrontLeftChassisAngularOffset = 0;
+        public static final double kFrontLeftChassisAngularOffset = -Math.PI / 2;
         public static final double kFrontRightChassisAngularOffset = 0;
-        public static final double kBackLeftChassisAngularOffset = 0;
-        public static final double kBackRightChassisAngularOffset = 0;
+        public static final double kBackLeftChassisAngularOffset = Math.PI;
+        public static final double kBackRightChassisAngularOffset = Math.PI / 2;
 
         // SPARK MAX CAN IDs
         public static final int kFrontLeftDrivingCanId = 1;
-        public static final int kFrontRightDrivingCanId = 3;
-        public static final int kRearLeftDrivingCanId = 5;
-        public static final int kRearRightDrivingCanId = 7;
+        public static final int kFrontRightDrivingCanId = 2;
+        public static final int kRearLeftDrivingCanId = 3;
+        public static final int kRearRightDrivingCanId = 4;
 
-        public static final int kFrontLeftTurningCanId = 2;
-        public static final int kFrontRightTurningCanId = 4;
-        public static final int kRearLeftTurningCanId = 6;
+        public static final int kFrontLeftTurningCanId = 5;
+        public static final int kFrontRightTurningCanId = 6;
+        public static final int kRearLeftTurningCanId = 7;
         public static final int kRearRightTurningCanId = 8;
 
         // TODO: Confirm Pigeon Gyro CAN ID and Orientation
@@ -132,6 +132,10 @@ public final class Constants {
 
     public static final class NeoMotorConstants {
         public static final double kFreeSpeedRpm = 5676;
+    }
+
+    public static final class ReefAlignmentConstants {
+        public static final double kMaxDist = 1;
     }
 
 }

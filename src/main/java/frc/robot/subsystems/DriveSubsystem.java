@@ -41,8 +41,11 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 public class DriveSubsystem extends SubsystemBase {
-    private static final double ROTATE_kP = 0.22;
-    private static final double ROTATE_kD = 0.006;
+    public static final double ROTATE_kP = 0.22;
+    public static final double ROTATE_kD = 0.006;
+    private static final double ALIGNMENT_DEADBAND = 1.5;
+    public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
+            DriveSubsystem.ROTATE_kD);
 
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -87,6 +90,8 @@ public class DriveSubsystem extends SubsystemBase {
     public DriveSubsystem() {
         m_gyro = new Pigeon2(Constants.DriveConstants.kGyroCanId);
         m_gyro.setYaw(0);
+
+        controller.enableContinuousInput(-180, 180);
 
         // Initialize the pose estimator
         m_poseEstimator = new SwerveDrivePoseEstimator(
@@ -151,23 +156,23 @@ public class DriveSubsystem extends SubsystemBase {
         setupDashboard();
     }
 
+    public double nearest60error() {
+        double currentAngle = getHeading();
+        double nearest60 = Math.round(currentAngle / 60) * 60;
+        return -currentAngle + nearest60;
+    }
+
     public Command turnToNearest60Degrees() {
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        controller.enableContinuousInput(-180, 180);
-        // controller.setTolerance(5);
+
         return Commands.run(() -> {
-            double currentAngle = getHeading();
-            double nearest60 = Math.round(currentAngle / 60) * 60;
-            SmartDashboard.putNumber("Nearest 60", nearest60);
-            double error = -currentAngle + nearest60;
+            double error = nearest60error();
 
             if (Math.abs(error) > 1) {
                 joystickDrive(0, 0, controller.calculate(error) / DriveConstants.kMaxAngularSpeed, true);
             } else {
                 joystickDrive(0, 0, 0, true);
             }
-        }, this);
+        }, DriveSubsystem.this);
     }
 
     public Command turnToNext60() {
@@ -182,34 +187,6 @@ public class DriveSubsystem extends SubsystemBase {
                 joystickDrive(0, 0, 0, true);
             }
         }, this);
-    }
-
-    public Command reefScoreCorrection() {
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        controller.enableContinuousInput(-180, 180);
-
-        return Commands.run(() -> {
-            double currentAngle = getHeading();
-            double currentMultiple = Math.round(currentAngle / 60) * 60;
-            double rotOffset = currentAngle - currentMultiple;
-
-            if (m_limelight.isTargetValid()) {
-
-                // Get the horizontal offset from the center of the tag.
-                // This value is between -30 and 30 degrees.
-                double offset = -m_limelight.getTX();
-                if (Math.abs(offset) > 5) {
-
-                    double strafeSpeed = 0.1 * Math.signum(offset);
-
-                    joystickDrive(0.1, strafeSpeed,
-                            controller.calculate(rotOffset) / DriveConstants.kMaxAngularSpeed, false);
-                } else {
-                    joystickDrive(0.1, 0, 0, false);
-                }
-            }
-        }, this).finallyDo(controller::reset);
     }
 
     private void setupDashboard() {
@@ -380,25 +357,23 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState());
     }
 
-    private void sideAlignment(double error, BooleanSupplier side) {
-        // Pass in absolute value of error
+    private void sideAlignment(DoubleSupplier error) {
 
         if (m_limelight.isTargetValid() == false) {
             return;
         }
-        if (error > 0) {
-            if (side.getAsBoolean() == false) {
-                // Go right
-                joystickDrive(0, -0.1, 0, false);
-            } else {
-                // Go left
-                joystickDrive(0, 0.1, 0, false);
-            }
+
+        PIDController controller = new PIDController(0.1, 0.0, 0.005);
+        // controller.enableContinuousInput(-180, 180);
+
+        if (Math.abs(error.getAsDouble()) > 1.5) {
+            joystickDrive(0, -controller.calculate(error.getAsDouble()) / DriveConstants.kMaxSpeedMetersPerSecond, 0,
+                    false);
         }
     }
 
-    public Command sideAlignmentCommand(double error, BooleanSupplier side) {
-        return run(() -> sideAlignment(error, side));
+    public Command sideAlignmentCommand(DoubleSupplier error) {
+        return run(() -> sideAlignment(error));
     }
 
     private void distanceCorrection(double currentDistance) {
@@ -432,7 +407,7 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rotationTarget = offset.get().plus(getRotation2D());
             }
         }).alongWith(rotateToAngleCommand(xSpeed, ySpeed, () -> m_rotationTarget))
-                .beforeStarting(() -> m_rotationTarget = new Rotation2d());
+                .beforeStarting(() -> m_rotationTarget = getRobotPoseEstimate().getRotation());
     }
 
     /**
@@ -457,9 +432,9 @@ public class DriveSubsystem extends SubsystemBase {
      * @return A command that rotates the robot to the specified angle.
      */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        controller.enableContinuousInput(-180, 180);
+        // @SuppressWarnings("resource")
+        // PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
+        // controller.enableContinuousInput(-180, 180);
 
         return run(() -> {
             Rotation2d targetRotation = target.get();

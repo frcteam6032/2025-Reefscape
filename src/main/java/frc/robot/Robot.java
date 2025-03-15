@@ -41,9 +41,11 @@ public class Robot extends TimedRobot {
         FollowPathCommand.warmupCommand().schedule();
 
         // Update dashboard values every 100ms
-        addPeriodic(() -> {
-            DashboardStore.update();
-        }, 0.1);
+        
+          addPeriodic(() -> {
+          DashboardStore.update();
+          }, 0.1);
+         
     }
 
     /**

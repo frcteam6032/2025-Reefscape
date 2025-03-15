@@ -69,7 +69,7 @@ public class CoralManagement {
 
     public static Command automaticElevatorCommand(boolean resolved) {
         if (resolved == true) {
-            return runToPositionCommand(ElevatorPosition.Level2);
+            return runToPositionCommand(targetPosition);
         }
         return null;
     }
