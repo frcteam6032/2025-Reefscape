@@ -58,12 +58,21 @@ public class Limelight {
         return (-getTX() < 0 ? true : false);
     }
 
-    public double getDistance() {
+    public double getDistanceReef() {
         // Using the height of the target and the height of the camera, we can calculate
         // the distance
         // to the target using the formula:
         // distance = (targetHeight - cameraHeight) / tan(cameraAngle + targetAngle)
-        return 0;
+        // 22 inches from the floor to the camera
+        // 26.5 inches from the floor to the target
+        double targetHeightMeters = 0.24;
+        double cameraHeightMeters = 0.6;
+        double cameraAngle = -21.5;
+        double targetAngle = getTY();
+        double distance = (targetHeightMeters - cameraHeightMeters)
+                / Math.tan(Math.toRadians(cameraAngle + targetAngle));
+
+        return distance;
 
     }
 
@@ -76,7 +85,7 @@ public class Limelight {
     }
 
     public boolean getDistanceCorrectionStatus() {
-        return Math.abs(getDistance()) < 1.0;
+        return Math.abs(getDistanceReef()) < 1.0;
     }
 
     public boolean positionResolved() {

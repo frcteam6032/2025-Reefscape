@@ -1,8 +1,16 @@
 package frc.robot.commands;
 
+import java.util.function.DoubleSupplier;
+
+import org.ejml.dense.row.SpecializedOps_DDRM;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.ReefAlignmentConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.vision.Limelight;
 
@@ -10,16 +18,23 @@ public class ReefScoreCorrectionCommand extends Command {
 
     private double backupVectorX = 0;
     private double backupVectorY = 0;
+    private double backupDistance = 0;
+    private boolean foundTarget = false;
+    private DoubleSupplier m_trimValue;
+
+    private DoubleSupplier m_speed;
 
     private final DriveSubsystem m_driveSubsystem;
     private final Limelight m_limelight;
+    private double m_targetOffset;
 
-    private PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0, DriveSubsystem.ROTATE_kD);
-
-    public ReefScoreCorrectionCommand(DriveSubsystem driveSubsystem, Limelight limelight) {
+    public ReefScoreCorrectionCommand(DriveSubsystem driveSubsystem, Limelight limelight, DoubleSupplier speed,
+            double targetOffset, DoubleSupplier trimValue) {
         this.m_driveSubsystem = driveSubsystem;
         this.m_limelight = limelight;
-
+        this.m_speed = speed;
+        this.m_targetOffset = targetOffset;
+        this.m_trimValue = trimValue;
         addRequirements(driveSubsystem);
     }
 
@@ -27,6 +42,9 @@ public class ReefScoreCorrectionCommand extends Command {
     public void initialize() {
         backupVectorX = 1;
         backupVectorY = 0;
+        // Commented this out so that if command is rescheduled it wont tweak
+        // backupDistance = ReefAlignmentConstants.kMaxDist;
+        foundTarget = false;
     }
     // Called every time the scheduler runs while the command is scheduled.
 
@@ -34,78 +52,68 @@ public class ReefScoreCorrectionCommand extends Command {
     @Override
     public void execute() {
 
-        // @SuppressWarnings("resource")
-        controller.enableContinuousInput(-180, 180);
-
-        double currentAngle = m_driveSubsystem.getHeading();
-
-        double nearestMultipleOf60 = Math.round(currentAngle / 60.0) * 60.0;
-
-        controller.setSetpoint(nearestMultipleOf60);
-
-        double rotationOutput = controller.calculate(currentAngle);
+        double error = m_driveSubsystem.nearest60error();
+        double rotationOutput = DriveSubsystem.controller.calculate(error);
         // Normalize
         double rotationCommand = rotationOutput / DriveConstants.kMaxAngularSpeed;
 
-        if (m_limelight.isTargetValid()) {
+        boolean hasTarget = m_limelight.isTargetValid();
+        if (hasTarget) {
             double offset = -m_limelight.getTX();
+            double distanceToTarget = m_limelight.getDistanceReef();
+            SmartDashboard.putNumber("Distance", distanceToTarget);
+
             // We need to move where the center of the target is
             // We have the TX and we need to solve the triangle (distance)
-            double xComponent = (Math.cos(Math.toRadians(offset)) * m_limelight.getDistance());
-            // IN CM
-            double yComponent = (Math.sin(Math.toRadians(offset)) * m_limelight.getDistance()) + 0.2;
+            double xComponent = (Math.cos(Math.toRadians(offset)) * distanceToTarget) - 0.42;
+            xComponent = MathUtil.clamp(xComponent, 0, 999);
+            // IN Ms
+            double yComponent = (Math.sin(Math.toRadians(offset)) * distanceToTarget) + m_targetOffset;
 
+            // Normalize the vector
             double magnitude = Math.sqrt(Math.pow(xComponent, 2) + Math.pow(yComponent, 2));
-
             double strafeSpeedX = xComponent / magnitude;
             double strafeSpeedY = yComponent / magnitude;
 
-            strafeSpeedX = 0.1 * Math.signum(xComponent);
-            strafeSpeedY = 0.1 * Math.signum(xComponent);
-
             backupVectorX = strafeSpeedX;
             backupVectorY = strafeSpeedY;
-
-            // If the offset is large = strafe
-            if (Math.abs(offset) > 5) {
-
-                m_driveSubsystem.joystickDrive(
-                        strafeSpeedX,
-                        strafeSpeedY,
-                        rotationCommand,
-                        false);
-            } else {
-                // Drive slow if small offset
-                m_driveSubsystem.joystickDrive(
-                        0.1,
-                        0.0,
-                        rotationCommand,
-                        false);
-            }
+            backupDistance = xComponent;
+            foundTarget = true;
         }
 
-        else {
+        SmartDashboard.putNumber("X Comp", backupVectorX);
+        SmartDashboard.putNumber("Y Comp", backupVectorY);
 
-            double strafeSpeedX;
-            double strafeSpeedY;
-
-            strafeSpeedX = backupVectorX;
-            strafeSpeedY = backupVectorY;
-
-            // If the offset is large = strafe
-
-            m_driveSubsystem.joystickDrive(
-                    -strafeSpeedX,
-                    strafeSpeedY,
-                    rotationCommand,
-                    false);
+        double speedScaling = m_speed.getAsDouble() * 0.4;
+        if (foundTarget) {
+            double kP = backupDistance / ReefAlignmentConstants.kMaxDist;
+            kP = MathUtil.clamp(kP, 0, 1);
+            speedScaling = speedScaling * kP;
+            // Slow down even more if we lost the target
+            speedScaling = hasTarget == false ? speedScaling * 0.5 : speedScaling;
+        } else { // Hasnt see a target yet
+            speedScaling *= 0.5;
         }
+        SmartDashboard.putNumber("Speed scaling", speedScaling);
+
+        // if (backupVectorX > 0.1) {
+        m_driveSubsystem.joystickDrive(
+                -backupVectorX * speedScaling - 0.03,
+                -backupVectorY * speedScaling + (-m_trimValue.getAsDouble() * 0.2),
+                rotationCommand,
+                false);
+        // } else {
+        // m_driveSubsystem.joystickDrive(
+        // -0.03,
+        // -m_trimValue.getAsDouble() * 0.1,
+        // rotationCommand,
+        // false);
+        // }
     }
 
     // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        controller.reset();
     }
 
     // Returns true when the command should end.
@@ -120,4 +128,13 @@ public class ReefScoreCorrectionCommand extends Command {
         return false;
     }
 
+    public static ReefScoreCorrectionCommand left(DriveSubsystem driveSubsystem, Limelight limelight,
+            DoubleSupplier speed, DoubleSupplier trimValue) {
+        return new ReefScoreCorrectionCommand(driveSubsystem, limelight, speed, 0.17, trimValue);
+    }
+
+    public static ReefScoreCorrectionCommand right(DriveSubsystem driveSubsystem, Limelight limelight,
+            DoubleSupplier speed, DoubleSupplier trimValue) {
+        return new ReefScoreCorrectionCommand(driveSubsystem, limelight, speed, -0.17, trimValue);
+    }
 }

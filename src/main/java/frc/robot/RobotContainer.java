@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.ReefScoreCorrectionCommand;
+import frc.robot.commands.ReefScoreCorrectionCommand;
 import frc.robot.subsystems.AlgaeInfeed;
 import frc.robot.subsystems.CoralInfeed;
 import frc.robot.subsystems.DriveSubsystem;
@@ -43,7 +44,10 @@ public class RobotContainer {
 
     private SendableChooser<Command> autoChooser;
 
-    private final Command reefScore = new ReefScoreCorrectionCommand(m_robotDrive, m_limelight);
+    private final Command reefScoreLeft = ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
+            () -> m_driverController.getLeftTriggerAxis(), () -> -m_driverController.getLeftX());
+    private final Command reefScoreRight = ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
+            () -> m_driverController.getRightTriggerAxis(), () -> -m_driverController.getLeftX());
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
@@ -51,17 +55,17 @@ public class RobotContainer {
 
     private double getRotationSpeed() {
         return MathUtil.applyDeadband(Utils.scaleDriverController(-m_driverController.getRightX(), thetaLimiter,
-                m_driverController.getRightTriggerAxis()), OIConstants.kDriveDeadband);
+                m_driverController.getLeftTriggerAxis()), OIConstants.kDriveDeadband);
     }
 
     private double getYSpeed() {
         return MathUtil.applyDeadband(Utils.scaleDriverController(-m_driverController.getLeftX(), yLimiter,
-                m_driverController.getRightTriggerAxis()), OIConstants.kDriveDeadband);
+                m_driverController.getLeftTriggerAxis()), OIConstants.kDriveDeadband);
     }
 
     private double getXSpeed() {
         return MathUtil.applyDeadband(Utils.scaleDriverController(-m_driverController.getLeftY(), xLimiter,
-                m_driverController.getRightTriggerAxis()), OIConstants.kDriveDeadband);
+                m_driverController.getLeftTriggerAxis()), OIConstants.kDriveDeadband);
     }
 
     // https://pathplanner.dev/pplib-triggers.html#pathplannerauto-triggers
@@ -120,23 +124,20 @@ public class RobotContainer {
 
         // Driver
         // Limelight YAW alignment
+
+        
         m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(
                 m_limelight, () -> getXSpeed(),
                 () -> getYSpeed()));
 
-        m_driverController.rightStick().whileTrue(m_robotDrive.rotateToAngleCommand(() -> getXSpeed(),
-                () -> getYSpeed(),
-                () -> new Rotation2d(Math.atan2(m_driverController.getRightX(),
-                        m_driverController.getRightY()))));
 
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
-        m_driverController.rightBumper()
-                .whileTrue(
-                        m_robotDrive.sideAlignmentCommand(() -> m_limelight.getTX()));
-        m_driverController.b().whileTrue(m_robotDrive.distanceCorrectionCommand(
-                m_limelight.getDistance()));
-        m_driverController.a()
-                .whileTrue(reefScore);
+
+        m_driverController.leftTrigger(0.1)
+                .whileTrue(reefScoreLeft);
+
+        m_driverController.rightTrigger(0.1)
+                .whileTrue(reefScoreRight);
         /*
          * m_driverController.a()
          * .toggleOnTrue(CoralManagement.automaticElevatorCommand(m_limelight.

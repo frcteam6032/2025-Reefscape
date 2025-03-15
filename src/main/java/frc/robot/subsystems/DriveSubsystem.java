@@ -44,6 +44,8 @@ public class DriveSubsystem extends SubsystemBase {
     public static final double ROTATE_kP = 0.22;
     public static final double ROTATE_kD = 0.006;
     private static final double ALIGNMENT_DEADBAND = 1.5;
+    public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
+            DriveSubsystem.ROTATE_kD);
 
     // Create MAXSwerveModules
     private final MAXSwerveModule m_frontLeft = new MAXSwerveModule(
@@ -88,6 +90,8 @@ public class DriveSubsystem extends SubsystemBase {
     public DriveSubsystem() {
         m_gyro = new Pigeon2(Constants.DriveConstants.kGyroCanId);
         m_gyro.setYaw(0);
+
+        controller.enableContinuousInput(-180, 180);
 
         // Initialize the pose estimator
         m_poseEstimator = new SwerveDrivePoseEstimator(
@@ -152,16 +156,16 @@ public class DriveSubsystem extends SubsystemBase {
         setupDashboard();
     }
 
+    public double nearest60error() {
+        double currentAngle = getHeading();
+        double nearest60 = Math.round(currentAngle / 60) * 60;
+        return -currentAngle + nearest60;
+    }
+
     public Command turnToNearest60Degrees() {
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        controller.enableContinuousInput(-180, 180);
-        // controller.setTolerance(5);
+
         return Commands.run(() -> {
-            double currentAngle = getHeading();
-            double nearest60 = Math.round(currentAngle / 60) * 60;
-            SmartDashboard.putNumber("Nearest 60", nearest60);
-            double error = -currentAngle + nearest60;
+            double error = nearest60error();
 
             if (Math.abs(error) > 1) {
                 joystickDrive(0, 0, controller.calculate(error) / DriveConstants.kMaxAngularSpeed, true);
@@ -184,7 +188,6 @@ public class DriveSubsystem extends SubsystemBase {
             }
         }, this);
     }
-
 
     private void setupDashboard() {
         DashboardStore.add("X Velocity", () -> getChassisSpeeds().vxMetersPerSecond);
@@ -404,7 +407,7 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rotationTarget = offset.get().plus(getRotation2D());
             }
         }).alongWith(rotateToAngleCommand(xSpeed, ySpeed, () -> m_rotationTarget))
-                .beforeStarting(() -> m_rotationTarget = new Rotation2d());
+                .beforeStarting(() -> m_rotationTarget = getRobotPoseEstimate().getRotation());
     }
 
     /**
@@ -429,9 +432,9 @@ public class DriveSubsystem extends SubsystemBase {
      * @return A command that rotates the robot to the specified angle.
      */
     public Command rotateToAngleCommand(DoubleSupplier xSpeed, DoubleSupplier ySpeed, Supplier<Rotation2d> target) {
-        @SuppressWarnings("resource")
-        PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
-        controller.enableContinuousInput(-180, 180);
+        // @SuppressWarnings("resource")
+        // PIDController controller = new PIDController(ROTATE_kP, 0.0, ROTATE_kD);
+        // controller.enableContinuousInput(-180, 180);
 
         return run(() -> {
             Rotation2d targetRotation = target.get();
