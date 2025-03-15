@@ -51,11 +51,10 @@ public class RobotContainer {
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
-    private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(4.);
+    private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
 
     private double getRotationSpeed() {
-        return MathUtil.applyDeadband(Utils.scaleDriverController(-m_driverController.getRightX(), thetaLimiter,
-                m_driverController.getLeftTriggerAxis()), OIConstants.kDriveDeadband);
+        return MathUtil.applyDeadband(-m_driverController.getRightX(), OIConstants.kDriveDeadband);
     }
 
     private double getYSpeed() {
@@ -125,11 +124,9 @@ public class RobotContainer {
         // Driver
         // Limelight YAW alignment
 
-        
         m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(
                 m_limelight, () -> getXSpeed(),
                 () -> getYSpeed()));
-
 
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
 
