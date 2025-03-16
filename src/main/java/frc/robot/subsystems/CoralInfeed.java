@@ -27,7 +27,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class CoralInfeed extends SubsystemBase {
     /* TMP: PID Constants */
-    private boolean enablePIDTuning = true;
+    private boolean enablePIDTuning = false;
 
     private double kP = 0.1;
     private double kD = 0.0;
@@ -45,7 +45,6 @@ public class CoralInfeed extends SubsystemBase {
     // Degrees
     private static final double POSITION_THRESHOLD = 5;
 
-    // TODO: Get actual gear ratio
     private static final double ROT_TO_DEG = 360 / 60;
     private static final double DEG_TO_ROT = 1 / ROT_TO_DEG;
 

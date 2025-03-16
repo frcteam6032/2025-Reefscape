@@ -56,7 +56,7 @@ public class CoralManagement {
         public double Height;
         public double Angle;
 
-        // Height: Inches, Agle: Degrees
+        // Height: rotations, Agle: Degrees
         ElevatorPosition(double height, double angle) {
             this.Height = height;
             this.Angle = angle;
