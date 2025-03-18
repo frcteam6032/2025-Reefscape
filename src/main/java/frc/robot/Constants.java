@@ -136,6 +136,14 @@ public final class Constants {
 
     public static final class ReefAlignmentConstants {
         public static final double kMaxDist = 1;
+        public static final double kMinDist = 0.5;
+        public static final double kMaxSpeedPercentMultiplier = 0.4;
+        public static final double kHalfSpeedMultiplier = 0.5;
+        public static final double kFrameToCameraDistance = 0.42;
+        public static final double kPreventUndVector = 0.03;
+        public static final double kPipeOffset = 0.17;
+        public static final double kTrimScalingMultiplier = 0.2;
+
     }
 
 }

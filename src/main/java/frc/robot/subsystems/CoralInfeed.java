@@ -149,7 +149,7 @@ public class CoralInfeed extends SubsystemBase {
         return runPivotCommand(0.0);
     }
 
-    /** Intake Commands */
+    /* Intake Commands */
     public Command intakeCommand(double value) {
         return runOnce(() -> intake(value));
     }

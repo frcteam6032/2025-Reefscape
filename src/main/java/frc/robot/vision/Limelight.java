@@ -73,7 +73,6 @@ public class Limelight {
                 / Math.tan(Math.toRadians(cameraAngle + targetAngle));
 
         return distance;
-
     }
 
     public double getTagId() {

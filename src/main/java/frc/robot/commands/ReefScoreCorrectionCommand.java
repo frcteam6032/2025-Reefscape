@@ -35,6 +35,7 @@ public class ReefScoreCorrectionCommand extends Command {
         this.m_speed = speed;
         this.m_targetOffset = targetOffset;
         this.m_trimValue = trimValue;
+
         addRequirements(driveSubsystem);
     }
 
@@ -42,7 +43,8 @@ public class ReefScoreCorrectionCommand extends Command {
     public void initialize() {
         backupVectorX = 1;
         backupVectorY = 0;
-        // Commented this out so that if command is rescheduled it wont tweak
+        // Commented this out so that if command is rescheduled it wont tweak - Eric
+        // (LMAO: Koen)
         // backupDistance = ReefAlignmentConstants.kMaxDist;
         foundTarget = false;
     }
@@ -64,7 +66,8 @@ public class ReefScoreCorrectionCommand extends Command {
 
             // We need to move where the center of the target is
             // We have the TX and we need to solve the triangle (distance)
-            double xComponent = (Math.cos(Math.toRadians(offset)) * distanceToTarget) - 0.42;
+            double xComponent = (Math.cos(Math.toRadians(offset)) * distanceToTarget)
+                    - ReefAlignmentConstants.kFrameToCameraDistance;
             xComponent = MathUtil.clamp(xComponent, 0, 999);
             // IN Ms
             double yComponent = (Math.sin(Math.toRadians(offset)) * distanceToTarget) + m_targetOffset;
@@ -83,22 +86,23 @@ public class ReefScoreCorrectionCommand extends Command {
         SmartDashboard.putNumber("X Comp", backupVectorX);
         SmartDashboard.putNumber("Y Comp", backupVectorY);
 
-        double speedScaling = m_speed.getAsDouble() * 0.4;
+        double speedScaling = m_speed.getAsDouble() * ReefAlignmentConstants.kMaxSpeedPercentMultiplier;
         if (foundTarget) {
             double kP = backupDistance / ReefAlignmentConstants.kMaxDist;
             kP = MathUtil.clamp(kP, 0, 1);
             speedScaling = speedScaling * kP;
             // Slow down even more if we lost the target
-            speedScaling = hasTarget == false ? speedScaling * 0.5 : speedScaling;
+            speedScaling = hasTarget == false ? speedScaling * ReefAlignmentConstants.kHalfSpeedMultiplier
+                    : speedScaling;
         } else { // Hasnt see a target yet
-            speedScaling *= 0.5;
+            speedScaling *= ReefAlignmentConstants.kHalfSpeedMultiplier;
         }
         SmartDashboard.putNumber("Speed scaling", speedScaling);
 
-        // if (backupVectorX > 0.1) {
         m_driveSubsystem.joystickDrive(
-                -backupVectorX * speedScaling - 0.03,
-                -backupVectorY * speedScaling + (-m_trimValue.getAsDouble() * 0.2),
+                -backupVectorX * speedScaling - ReefAlignmentConstants.kPreventUndVector,
+                -backupVectorY
+                        * speedScaling + (-m_trimValue.getAsDouble() * ReefAlignmentConstants.kTrimScalingMultiplier),
                 rotationCommand,
                 false);
     }
@@ -111,8 +115,7 @@ public class ReefScoreCorrectionCommand extends Command {
     // Returns true when the command should end.
     @Override
     public boolean isFinished() {
-
-        return false;
+        return backupDistance < ReefAlignmentConstants.kMinDist;
     }
 
     @Override
@@ -122,11 +125,13 @@ public class ReefScoreCorrectionCommand extends Command {
 
     public static ReefScoreCorrectionCommand left(DriveSubsystem driveSubsystem, Limelight limelight,
             DoubleSupplier speed, DoubleSupplier trimValue) {
-        return new ReefScoreCorrectionCommand(driveSubsystem, limelight, speed, 0.17, trimValue);
+        return new ReefScoreCorrectionCommand(driveSubsystem, limelight, speed, ReefAlignmentConstants.kPipeOffset,
+                trimValue);
     }
 
     public static ReefScoreCorrectionCommand right(DriveSubsystem driveSubsystem, Limelight limelight,
             DoubleSupplier speed, DoubleSupplier trimValue) {
-        return new ReefScoreCorrectionCommand(driveSubsystem, limelight, speed, -0.17, trimValue);
+        return new ReefScoreCorrectionCommand(driveSubsystem, limelight, speed, -ReefAlignmentConstants.kPipeOffset,
+                trimValue);
     }
 }

@@ -1,6 +1,7 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -31,8 +32,8 @@ public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Limelight m_limelight = new Limelight();
-    // private final CoralInfeed m_coralInfeed = new CoralInfeed();
-    // private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
+    private final CoralInfeed m_coralInfeed = new CoralInfeed();
+    private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
     // private final AlgaeInfeed m_algae = new AlgaeInfeed();
 
     // Create the driver controller
@@ -87,9 +88,19 @@ public class RobotContainer {
     private void configureNamedCommands() {
         // TODO: This will contain all auto named commands.
 
-        // NamedCommands.registerCommand("L1 Pivot",
-        // m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
-        // NamedCommands.registerCommand("Score", m_coralInfeed.intakeCommand(-0.5));
+        NamedCommands.registerCommand("L0 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Home));
+        NamedCommands.registerCommand("L1 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
+        NamedCommands.registerCommand("L2 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level2));
+        NamedCommands.registerCommand("L3 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level3));
+        NamedCommands.registerCommand("L4 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level4));
+
+        NamedCommands.registerCommand("L0 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Home));
+        NamedCommands.registerCommand("L1 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level1));
+        NamedCommands.registerCommand("L2 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level2));
+        NamedCommands.registerCommand("L3 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level3));
+        NamedCommands.registerCommand("L4 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level4));
+
+        NamedCommands.registerCommand("Score", m_coralInfeed.intakeCommand(-0.5));
     }
 
     private void initAutoChooser() {
