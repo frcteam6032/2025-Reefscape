@@ -154,6 +154,14 @@ public class CoralInfeed extends SubsystemBase {
         return runOnce(() -> intake(value));
     }
 
+    public Command scoreCommand() {
+        return intakeCommand(-0.5).withTimeout(0.5);
+    }
+
+    public Command autoIntakeCMD() {
+        return intakeCommand(-0.5).withTimeout(0.5);
+    }
+
     private void intake(double value) {
         m_intakeMotor.set(value);
     }

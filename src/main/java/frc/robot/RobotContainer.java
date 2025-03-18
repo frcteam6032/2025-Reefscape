@@ -45,9 +45,9 @@ public class RobotContainer {
 
     private SendableChooser<Command> autoChooser;
 
-    private final Command reefScoreLeft = ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
+    private final Command visionReefScoreLeft = ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
             () -> m_driverController.getLeftTriggerAxis(), () -> -m_driverController.getLeftX());
-    private final Command reefScoreRight = ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
+    private final Command visionReefScoreRight = ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
             () -> m_driverController.getRightTriggerAxis(), () -> -m_driverController.getLeftX());
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
@@ -72,11 +72,6 @@ public class RobotContainer {
     public RobotContainer() {
         initAutoChooser();
 
-        // CoralManagement.init(m_coralInfeed, m_elevator);
-
-        // Put subsystem woth the method in it
-        // NamedCommands.registerCommand("autoBalance", swerve.autoBalanceCommand());
-
         configureNamedCommands();
 
         // Configure the buttons & default commands
@@ -88,19 +83,23 @@ public class RobotContainer {
     private void configureNamedCommands() {
         // TODO: This will contain all auto named commands.
 
-        NamedCommands.registerCommand("L0 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Home));
-        NamedCommands.registerCommand("L1 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level1));
-        NamedCommands.registerCommand("L2 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level2));
-        NamedCommands.registerCommand("L3 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level3));
-        NamedCommands.registerCommand("L4 Pivot", m_coralInfeed.runToPositionCommand(ElevatorPosition.Level4));
+        NamedCommands.registerCommand("Score L3 Left",
+                visionReefScoreLeft
+                        .alongWith(m_elevator.runToPositionCommand(ElevatorPosition.Level3))
+                        .alongWith(m_coralInfeed.runToPositionCommand(ElevatorPosition.Level3))
+                        .andThen(m_coralInfeed.scoreCommand()));
 
-        NamedCommands.registerCommand("L0 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Home));
-        NamedCommands.registerCommand("L1 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level1));
-        NamedCommands.registerCommand("L2 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level2));
-        NamedCommands.registerCommand("L3 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level3));
-        NamedCommands.registerCommand("L4 Elevator", m_elevator.runToPositionCommand(ElevatorPosition.Level4));
+        NamedCommands.registerCommand("Score L3 Right",
+                visionReefScoreRight
+                        .alongWith(m_elevator.runToPositionCommand(ElevatorPosition.Level3))
+                        .alongWith(m_coralInfeed.runToPositionCommand(ElevatorPosition.Level3))
+                        .andThen(m_coralInfeed.scoreCommand()));
 
-        NamedCommands.registerCommand("Score", m_coralInfeed.intakeCommand(-0.5));
+        NamedCommands.registerCommand("Intake",
+                m_elevator.runToPositionCommand(ElevatorPosition.FeederStation)
+                        .alongWith(m_coralInfeed.runToPositionCommand(ElevatorPosition.FeederStation))
+                        .andThen(m_coralInfeed.autoIntakeCMD()));
+
     }
 
     private void initAutoChooser() {
@@ -142,10 +141,10 @@ public class RobotContainer {
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
 
         m_driverController.leftTrigger(0.1)
-                .whileTrue(reefScoreLeft);
+                .whileTrue(visionReefScoreLeft);
 
         m_driverController.rightTrigger(0.1)
-                .whileTrue(reefScoreRight);
+                .whileTrue(visionReefScoreRight);
         /*
          * m_driverController.a()
          * .toggleOnTrue(CoralManagement.automaticElevatorCommand(m_limelight.

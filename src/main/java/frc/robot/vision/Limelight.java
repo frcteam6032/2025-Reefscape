@@ -79,10 +79,6 @@ public class Limelight {
         return m_limelightTable.getEntry("tid").getDouble(0);
     }
 
-    public boolean getYawCorrectionStatus() {
-        return Math.abs(getTX()) < 1.0;
-    }
-
     public boolean getDistanceCorrectionStatus() {
         return Math.abs(getDistanceReef()) < 1.0;
     }
@@ -90,7 +86,7 @@ public class Limelight {
     public boolean positionResolved() {
         // After the computer thinks it is aligned, it can assist the driver by moving
         // the elevator up automatically
-        return getYawCorrectionStatus() && getDistanceCorrectionStatus();
+        return getDistanceCorrectionStatus();
     }
 
 }
