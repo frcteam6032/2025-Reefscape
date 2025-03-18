@@ -96,6 +96,8 @@ public class AlgaeInfeed extends SubsystemBase {
 
             reapplyPID();
         }
+
+        m_encoder.setPosition(0.0);
     }
 
     private void reapplyPID() {

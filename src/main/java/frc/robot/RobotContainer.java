@@ -110,7 +110,7 @@ public class RobotContainer {
 
         /* LT: Intake, LB: Outtake */
         m_driverController.leftTrigger().whileTrue(m_coralInfeed.intakeCommand(0.5)).onFalse(m_coralInfeed.stopIntakeCommand());
-        m_driverController.leftBumper().whileTrue(m_coralInfeed.intakeCommand(-0.4)).onFalse(m_coralInfeed.stopIntakeCommand());
+        m_driverController.leftBumper().whileTrue(m_coralInfeed.intakeCommand(-0.5)).onFalse(m_coralInfeed.stopIntakeCommand());
 
         /* Start: Reset Odometry */
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
@@ -153,10 +153,6 @@ public class RobotContainer {
         /* D-Pad Up/Down: Move Elevator */
         m_operatorController.povUp().onTrue(m_elevator.runElevatorCommand(0.2)).onFalse(m_elevator.stopElevatorCommand());
         m_operatorController.povDown().onTrue(m_elevator.runElevatorCommand(-0.2)).onFalse(m_elevator.stopElevatorCommand());
-
-        /* LB/RB: Move Coral Pivot */
-        m_operatorController.rightBumper().whileTrue(m_coralInfeed.runPivotCommand(0.2)).onFalse(m_coralInfeed.stopPivotCommand());
-        m_operatorController.leftBumper().whileTrue(m_coralInfeed.runPivotCommand(-0.2)).onFalse(m_coralInfeed.stopPivotCommand());
 
         /* LT/RT: Move Algae Pivot */
         m_operatorController.rightTrigger().whileTrue(m_algae.runPivotCommand(0.2)).onFalse(m_algae.stopPivotCommand());

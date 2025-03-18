@@ -18,6 +18,8 @@ public class CoralManagement {
     public static void init(CoralInfeed Infeed, ElevatorSubsystem Elevator) {
         CoralManagement.infeed = Infeed;
         CoralManagement.elevator = Elevator;
+
+        DashboardStore.add("Coral State", () -> targetPosition.name());
     }
 
     private static void cyclePosition() {
@@ -49,14 +51,15 @@ public class CoralManagement {
         Home(0, 0),
         FeederStation(0.0, 47),
         Level1(-1, -1),
-        Level2(41.8, 150),
-        Level3(57.3, 200),
+        Level2(-1, 200),
+        Level3(-1, 200),
         Level4(-1, -1);
 
         public double Height;
         public double Angle;
 
-        // Height: rotations, Agle: Degrees
+        // height: Elevator (Rotations)
+        // angle: Coral Infeed (Degrees)
         ElevatorPosition(double height, double angle) {
             this.Height = height;
             this.Angle = angle;

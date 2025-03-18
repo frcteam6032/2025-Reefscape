@@ -4,6 +4,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.util.DashboardStore;
 import frc.robot.util.CoralManagement.ElevatorPosition;
 
@@ -27,7 +28,7 @@ import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 public class ElevatorSubsystem extends SubsystemBase {
     /* TMP: PID Constants */
-    private boolean enablePIDTuning = false;
+    private boolean enablePIDTuning = true;
 
     private double kP = 0.1;
     private double kD = 0.0;
@@ -39,6 +40,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     private static final double POSITION_THRESHOLD = 1.5;
 
+    // gonna do this stuff in rotations
     private static final double MAX_POS = -1;
     private static final double MIN_POS = -1;
 
@@ -84,6 +86,9 @@ public class ElevatorSubsystem extends SubsystemBase {
         }
 
         m_encoder.setPosition(0.0);
+
+        // When the limit switch is tripped, reset encoder
+        // new Trigger(this::limitSwitchTripped).onTrue(runOnce(() -> m_encoder.setPosition(0.0)));
     }
 
     private void reapplyPID() {
@@ -146,6 +151,11 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     public DoubleSupplier targetSupplier() {
         return () -> m_target;
+    }
+
+    /** Limit Switch */
+    private boolean limitSwitchTripped() {
+        return m_motor.getReverseLimitSwitch().isPressed();
     }
 
     @Override
