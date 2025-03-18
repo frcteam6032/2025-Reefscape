@@ -4,11 +4,13 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.util.DashboardStore;
 import frc.robot.util.CoralManagement.ElevatorPosition;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -32,25 +34,23 @@ public class ElevatorSubsystem extends SubsystemBase {
     private double kP = 0.1;
     private double kD = 0.0;
     private double kFF = 0.0;
-    private double kMaxOutput = 0.3;
-    private double kMinOutput = -0.3;
+    private double kMaxOutput = 0.95;
+    private double kMinOutput = -0.95;
 
-    private static final int CAN_ID = -1;
+    private static final int CAN_ID = 13;
 
-    private static final double INCHES_TO_ROT = -1;
-    private static final double ROT_TO_INCHES = 1 / INCHES_TO_ROT;
+    private static final double POSITION_THRESHOLD = 1.5;
 
-    private static final double POSITION_THRESHOLD = 0.25;
-
-    private static final double MAX_POS_INCHES = 53;
-    private static final double MIN_POS_INCHES = 0;
+    // gonna do this stuff in rotations
+    private static final double MAX_POS = 158;
+    private static final double MIN_POS = 0.5;
 
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
-            .forwardSoftLimit(MAX_POS_INCHES * INCHES_TO_ROT).reverseSoftLimit(MIN_POS_INCHES * INCHES_TO_ROT)
+            .forwardSoftLimit(MAX_POS).reverseSoftLimit(MIN_POS)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
-            .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(true);
+            .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(false);
 
     private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
 
@@ -82,9 +82,16 @@ public class ElevatorSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("Elevator FF", kFF);
             SmartDashboard.putNumber("Elevator Max", kMaxOutput);
             SmartDashboard.putNumber("Elevator Min", kMinOutput);
+            SmartDashboard.putNumber("Elevator Target", m_target);
 
-            reapplyPID();
         }
+        
+        reapplyPID();
+
+        m_encoder.setPosition(0.0);
+
+        // When the limit switch is tripped, reset encoder
+        // new Trigger(this::limitSwitchTripped).onTrue(runOnce(() -> m_encoder.setPosition(0.0)));
     }
 
     private void reapplyPID() {
@@ -100,7 +107,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     private void setupDashboard() {
-        DashboardStore.add("Elevator Target", targetSupplier());
+        // DashboardStore.add("Elevator Target", targetSupplier());
         DashboardStore.add("Elevator Velocity", m_encoder::getVelocity);
         DashboardStore.add("Elevator Position", m_encoder::getPosition);
     }
@@ -119,13 +126,13 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     /** PID Commands */
-    public Command runToPositionCommand(ElevatorPosition position) {
-        return runOnce(() -> runToPosition(position));
+    public Command runToPositionCommand(Supplier<ElevatorPosition> position) {
+        return runOnce(() -> runToPosition(position.get()));
     }
 
     private void runToPosition(ElevatorPosition position) {
         m_target = position.Height;
-        m_pid.setReference(m_target * INCHES_TO_ROT, ControlType.kPosition);
+        m_pid.setReference(m_target, ControlType.kPosition);
     }
 
     /** Encoder & Target */
@@ -138,7 +145,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     private boolean inRange() {
-        return Math.abs(m_target - (getPosition() * ROT_TO_INCHES)) < POSITION_THRESHOLD;
+        return Math.abs(m_target - getPosition()) < POSITION_THRESHOLD;
     }
 
     public BooleanSupplier inRangeSupplier() {
@@ -149,6 +156,11 @@ public class ElevatorSubsystem extends SubsystemBase {
         return () -> m_target;
     }
 
+    /** Limit Switch */
+    private boolean limitSwitchTripped() {
+        return m_motor.getReverseLimitSwitch().isPressed();
+    }
+
     @Override
     public void periodic() {
         if (enablePIDTuning) {
@@ -157,6 +169,7 @@ public class ElevatorSubsystem extends SubsystemBase {
             double ff = SmartDashboard.getNumber("Elevator FF", kFF);
             double max = SmartDashboard.getNumber("Elevator Max", kMaxOutput);
             double min = SmartDashboard.getNumber("Elevator Min", kMinOutput);
+            double target = SmartDashboard.getNumber("Elevator Target", m_target);
 
             // if PID coefficients on SmartDashboard have changed, write new values to
             // controller
@@ -176,6 +189,10 @@ public class ElevatorSubsystem extends SubsystemBase {
                 kMinOutput = min;
                 kMaxOutput = max;
                 reapplyPID();
+            }
+            if (target != m_target) {
+                m_target = target;
+                m_pid.setReference(m_target, ControlType.kPosition);
             }
         }
     }

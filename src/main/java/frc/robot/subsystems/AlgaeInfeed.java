@@ -2,6 +2,7 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.DashboardStore;
 
@@ -34,31 +35,27 @@ public class AlgaeInfeed extends SubsystemBase {
     private double kMaxOutput = 0.3;
     private double kMinOutput = -0.3;
 
-    private static final int PIVOT_ID = -1;
-    private static final int INTAKE_ID = -1;
+    private static final int PIVOT_ID = 9;
+    private static final int INTAKE_ID = 10;
 
-    private static final int MAX_ANGLE = -1;
-    private static final int MIN_ANGLE = -1;
+    private static final double MAX_ANGLE = 0.2;
+    private static final double MIN_ANGLE = -30;
 
-    private static final double STOW_ANGLE = -1;
-    private static final double DEPLOY_ANGLE = -1;
+    private static final double STOW_ANGLE = -3;
+    private static final double DEPLOY_ANGLE = -20;
 
     // Degrees
     private static final double POSITION_THRESHOLD = 5;
 
-    // TODO: Get actual gear ratio
-    private static final double ROT_TO_DEG = 360 / 3;
-    private static final double DEG_TO_ROT = 1 / ROT_TO_DEG;
-
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
-            .forwardSoftLimit(MAX_ANGLE * DEG_TO_ROT).reverseSoftLimit(MIN_ANGLE * DEG_TO_ROT)
+            .forwardSoftLimit(MAX_ANGLE).reverseSoftLimit(MIN_ANGLE )
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
 
     private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
-            .inverted(false)
+            .inverted(true)
             .smartCurrentLimit(20);
 
     private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
@@ -81,7 +78,7 @@ public class AlgaeInfeed extends SubsystemBase {
         m_intakeMotor.configure(INTAKE_CONFIG, ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
 
-        m_target = getPosition() * DEG_TO_ROT;
+        m_target = getPosition();
 
         setupDashboard();
 
@@ -93,9 +90,11 @@ public class AlgaeInfeed extends SubsystemBase {
             SmartDashboard.putNumber("Algae Max", kMaxOutput);
             SmartDashboard.putNumber("Algae Min", kMinOutput);
             SmartDashboard.putNumber("Algae Target", m_target);
-
-            reapplyPID();
         }
+
+        reapplyPID();
+
+        m_encoder.setPosition(0.0);
     }
 
     private void reapplyPID() {
@@ -110,6 +109,7 @@ public class AlgaeInfeed extends SubsystemBase {
 
     private void setupDashboard() {
         DashboardStore.add("Algae Pivot", this::getPosition);
+        DashboardStore.add("Algae Target", () -> m_target);
     }
 
     /** Pivot Commands */
@@ -122,12 +122,12 @@ public class AlgaeInfeed extends SubsystemBase {
     }
 
     public Command runToAngleCommand(double angle) {
-        return runOnce(() -> runToAngle(angle));
+        return runOnce(() -> runToPosition(angle));
     }
 
-    private void runToAngle(double angle) {
+    private void runToPosition(double angle) {
         m_target = angle;
-        m_pid.setReference(m_target * DEG_TO_ROT, ControlType.kPosition);
+        m_pid.setReference(m_target, ControlType.kPosition);
     }
 
     /** Vbus Commands */
@@ -143,16 +143,15 @@ public class AlgaeInfeed extends SubsystemBase {
         return runPivotCommand(0.0);
     }
 
+    public Command toggleCommand() {
+        return Commands.either(
+            runToAngleCommand(DEPLOY_ANGLE),
+            runToAngleCommand(STOW_ANGLE),
+            () -> m_target == STOW_ANGLE
+        );
+    }
+
     /** Encoder Stuff */
-
-    private double getAngle() {
-        return getPosition() * ROT_TO_DEG;
-    }
-
-    public DoubleSupplier angleSupplier() {
-        return this::getAngle;
-    }
-
     private double getPosition() {
         return m_encoder.getPosition();
     }
@@ -162,7 +161,7 @@ public class AlgaeInfeed extends SubsystemBase {
     }
 
     private boolean inRange() {
-        return Math.abs(m_target - (getPosition() * ROT_TO_DEG)) < POSITION_THRESHOLD;
+        return Math.abs(m_target - getPosition()) < POSITION_THRESHOLD;
     }
 
     public BooleanSupplier inRangeSupplier() {
@@ -215,8 +214,8 @@ public class AlgaeInfeed extends SubsystemBase {
                 reapplyPID();
             }
 
-            double target = SmartDashboard.getNumber("Algae Target", m_target);
-            m_pid.setReference(target * DEG_TO_ROT, ControlType.kPosition);
+            // double target = SmartDashboard.getNumber("Algae Target", m_target);
+            // m_pid.setReference(target, ControlType.kPosition);
         }
     }
 }

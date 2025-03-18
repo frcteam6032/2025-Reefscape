@@ -4,6 +4,8 @@
 
 package frc.robot.util;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.CoralInfeed;
@@ -13,11 +15,13 @@ import frc.robot.subsystems.ElevatorSubsystem;
 public class CoralManagement {
     private static CoralInfeed infeed;
     private static ElevatorSubsystem elevator;
-    private static ElevatorPosition targetPosition;
+    private static ElevatorPosition targetPosition = ElevatorPosition.Home;
 
     public static void init(CoralInfeed Infeed, ElevatorSubsystem Elevator) {
         CoralManagement.infeed = Infeed;
         CoralManagement.elevator = Elevator;
+
+        DashboardStore.add("Coral State", () -> targetPosition.name());
     }
 
     private static void cyclePosition() {
@@ -42,34 +46,35 @@ public class CoralManagement {
     }
 
     public static Command cycleAndRunToPositionCommand() {
-        return cyclePositionsCommand().andThen(runToPositionCommand(targetPosition));
+        return cyclePositionsCommand().andThen(runToPositionCommand(() -> targetPosition));
     }
 
     public static enum ElevatorPosition {
-        Home(0, 0),
-        FeederStation(-1, -1),
-        Level1(-1, -1),
-        Level2(41.8, 200),
-        Level3(57.3, 200),
+        Home(1, 10),
+        FeederStation(1.0, 59),
+        Level1(5, 250),
+        Level2(10, 250),
+        Level3(105, 250),
         Level4(-1, -1);
 
         public double Height;
         public double Angle;
 
-        // Height: Inches, Agle: Degrees
+        // height: Elevator (Rotations)
+        // angle: Coral Infeed (Degrees)
         ElevatorPosition(double height, double angle) {
             this.Height = height;
             this.Angle = angle;
         };
     }
 
-    public static Command runToPositionCommand(ElevatorPosition desiredPosition) {
+    public static Command runToPositionCommand(Supplier<ElevatorPosition> desiredPosition) {
         return infeed.runToPositionCommand(desiredPosition).alongWith(elevator.runToPositionCommand(desiredPosition));
     }
 
     public static Command automaticElevatorCommand(boolean resolved) {
         if (resolved == true) {
-            return runToPositionCommand(targetPosition);
+            return runToPositionCommand(() -> targetPosition);
         }
         return null;
     }
