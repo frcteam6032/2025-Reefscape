@@ -4,6 +4,8 @@
 
 package frc.robot.util;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.CoralInfeed;
@@ -13,7 +15,7 @@ import frc.robot.subsystems.ElevatorSubsystem;
 public class CoralManagement {
     private static CoralInfeed infeed;
     private static ElevatorSubsystem elevator;
-    private static ElevatorPosition targetPosition;
+    private static ElevatorPosition targetPosition = ElevatorPosition.Home;
 
     public static void init(CoralInfeed Infeed, ElevatorSubsystem Elevator) {
         CoralManagement.infeed = Infeed;
@@ -44,15 +46,15 @@ public class CoralManagement {
     }
 
     public static Command cycleAndRunToPositionCommand() {
-        return cyclePositionsCommand().andThen(runToPositionCommand(targetPosition));
+        return cyclePositionsCommand().andThen(runToPositionCommand(() -> targetPosition));
     }
 
     public static enum ElevatorPosition {
-        Home(0, 0),
-        FeederStation(0.0, 47),
-        Level1(-1, -1),
-        Level2(-1, 200),
-        Level3(-1, 200),
+        Home(1, 10),
+        FeederStation(1.0, 59),
+        Level1(5, 250),
+        Level2(10, 250),
+        Level3(105, 250),
         Level4(-1, -1);
 
         public double Height;
@@ -66,13 +68,13 @@ public class CoralManagement {
         };
     }
 
-    public static Command runToPositionCommand(ElevatorPosition desiredPosition) {
+    public static Command runToPositionCommand(Supplier<ElevatorPosition> desiredPosition) {
         return infeed.runToPositionCommand(desiredPosition).alongWith(elevator.runToPositionCommand(desiredPosition));
     }
 
     public static Command automaticElevatorCommand(boolean resolved) {
         if (resolved == true) {
-            return runToPositionCommand(ElevatorPosition.Level2);
+            return runToPositionCommand(() -> ElevatorPosition.Level2);
         }
         return null;
     }

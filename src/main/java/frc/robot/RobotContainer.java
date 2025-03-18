@@ -100,9 +100,11 @@ public class RobotContainer {
                         () -> m_robotDrive.joystickDrive(
                                 getXSpeed(),
                                 getYSpeed(),
-                                -getRotationSpeed(),
+                                getRotationSpeed(),
                                 true),
                         m_robotDrive));
+
+        // m_algae.setDefaultCommand(m_algae.intakeCommand(0.3));
 
         // ===================
         //  DRIVER CONTROLLER
@@ -159,25 +161,29 @@ public class RobotContainer {
         m_operatorController.leftTrigger().whileTrue(m_algae.runPivotCommand(-0.2)).onFalse(m_algae.stopPivotCommand());
 
         /* X/B: Algae Infeed/Outfeed */
-        m_operatorController.x().whileTrue(m_algae.intakeCommand(0.5)).onFalse(m_algae.stopIntakeCommand());
-        m_operatorController.b().whileTrue(m_algae.intakeCommand(-0.5)).onFalse(m_algae.stopIntakeCommand());
+        m_operatorController.x().whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.intakeCommand(0.6));
+        m_operatorController.b().whileTrue(m_algae.intakeCommand(-0.4)).onFalse(m_algae.stopIntakeCommand());
+
+        m_operatorController.leftBumper().whileTrue(m_coralInfeed.runPivotCommand(-0.5)).onFalse(m_coralInfeed.stopPivotCommand());
+        m_operatorController.rightBumper().whileTrue(m_coralInfeed.runPivotCommand(0.5)).onFalse(m_coralInfeed.stopPivotCommand());
 
         /* Y: Cycle Elevator */
-        // m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
+        m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
         /* TMP: Run Elevator to L2 */
-        m_operatorController.y().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level2));
+        // m_operatorController.y().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level2));
 
         /* A: Run to Feeder Station */
-        // m_operatorController.a().onTrue(CoralManagement.runToPositionCommand(ElevatorPosition.FeederStation));
-        m_operatorController.a().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.FeederStation));
+        m_operatorController.a().onTrue(CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation));
+        // m_operatorController.a().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.FeederStation));
 
         /* TMP: D-Pad Left/Right: Run Coral Infeed to L2/Feeder */
-        m_operatorController.povLeft().onTrue(m_coralInfeed.runToPositionCommand(ElevatorPosition.Level2));
-        m_operatorController.povRight().onTrue(m_coralInfeed.runToPositionCommand(ElevatorPosition.FeederStation));
+        m_operatorController.povLeft().onTrue(m_coralInfeed.runToPositionCommand(() -> ElevatorPosition.Level2));
+        m_operatorController.povRight().onTrue(m_coralInfeed.runToPositionCommand(() -> ElevatorPosition.FeederStation));
 
         /* TMP: LS/RS: Deploy/Stow Algae Infeed */
-        m_operatorController.leftStick().onTrue(m_algae.deployCommand());
-        m_operatorController.rightStick().onTrue(m_algae.stowCommand());
+        m_operatorController.leftStick().onTrue(m_algae.toggleCommand());
+        // m_operatorController.leftStick().onTrue(m_algae.deployCommand());
+        // m_operatorController.rightStick().onTrue(m_algae.stowCommand());
     }
 
     // Get the selected auto command

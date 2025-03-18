@@ -13,6 +13,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
@@ -39,7 +40,7 @@ public class CoralInfeed extends SubsystemBase {
     private static final int INTAKE_ID = 12;
 
     // 270 - 0
-    private static final int MAX_ANGLE = 250;
+    private static final int MAX_ANGLE = 270;
     private static final int MIN_ANGLE = 5;
 
     // Degrees
@@ -62,7 +63,8 @@ public class CoralInfeed extends SubsystemBase {
     private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(false)
-            .smartCurrentLimit(40).apply(SOFT_LIMITS);
+            .smartCurrentLimit(40)
+            .apply(SOFT_LIMITS);
 
     private final SparkMax m_pivotMotor = new SparkMax(PIVOT_ID, MotorType.kBrushless);
     private final SparkMax m_intakeMotor = new SparkMax(INTAKE_ID, MotorType.kBrushless);
@@ -90,9 +92,9 @@ public class CoralInfeed extends SubsystemBase {
             SmartDashboard.putNumber("Coral Max", kMaxOutput);
             SmartDashboard.putNumber("Coral Min", kMinOutput);
             SmartDashboard.putNumber("Coral Target", m_target);
-
-            reapplyPID();
         }
+
+        reapplyPID();
 
         m_encoder.setPosition(0.0);
     }
@@ -109,11 +111,13 @@ public class CoralInfeed extends SubsystemBase {
 
     private void setupDashboard() {
         DashboardStore.add("Coral Pivot", this::getPosition);
+        DashboardStore.add("Coral Target", () -> m_target);
+        DashboardStore.add("Coral Target NU", () -> m_target * DEG_TO_ROT);
     }
 
     /** Pivot Commands */
-    public Command runToPositionCommand(ElevatorPosition position) {
-        return runOnce(() -> runToPosition(position));
+    public Command runToPositionCommand(Supplier<ElevatorPosition> position) {
+        return runOnce(() -> runToPosition(position.get()));
     }
 
     private void runToPosition(ElevatorPosition position) {
@@ -164,6 +168,12 @@ public class CoralInfeed extends SubsystemBase {
         return intakeCommand(0.0);
     }
 
+    public void coast() {
+        PIVOT_CONFIG.idleMode(IdleMode.kCoast);
+        m_pivotMotor.configure(PIVOT_CONFIG, ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+    }
+
     @Override
     public void periodic() {
         if (enablePIDTuning) {
@@ -195,7 +205,7 @@ public class CoralInfeed extends SubsystemBase {
             }
 
             double target = SmartDashboard.getNumber("Coral Target", m_target);
-            m_pid.setReference(target * DEG_TO_ROT, ControlType.kPosition);
+            // m_pid.setReference(target * DEG_TO_ROT, ControlType.kPosition);
         }
     }
 }

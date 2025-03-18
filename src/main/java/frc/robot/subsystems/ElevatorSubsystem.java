@@ -10,6 +10,7 @@ import frc.robot.util.CoralManagement.ElevatorPosition;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -28,21 +29,21 @@ import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 public class ElevatorSubsystem extends SubsystemBase {
     /* TMP: PID Constants */
-    private boolean enablePIDTuning = true;
+    private boolean enablePIDTuning = false;
 
     private double kP = 0.1;
     private double kD = 0.0;
     private double kFF = 0.0;
-    private double kMaxOutput = 0.3;
-    private double kMinOutput = -0.3;
+    private double kMaxOutput = 0.95;
+    private double kMinOutput = -0.95;
 
     private static final int CAN_ID = 13;
 
     private static final double POSITION_THRESHOLD = 1.5;
 
     // gonna do this stuff in rotations
-    private static final double MAX_POS = -1;
-    private static final double MIN_POS = -1;
+    private static final double MAX_POS = 158;
+    private static final double MIN_POS = 0.5;
 
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
             .forwardSoftLimit(MAX_POS).reverseSoftLimit(MIN_POS)
@@ -56,7 +57,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     private SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
             .smartCurrentLimit(50)
             .inverted(true)
-            // .apply(SOFT_LIMITS)
+            .apply(SOFT_LIMITS)
             .apply(LIMIT_SWITCH);
 
     private double m_target = 0;
@@ -81,9 +82,11 @@ public class ElevatorSubsystem extends SubsystemBase {
             SmartDashboard.putNumber("Elevator FF", kFF);
             SmartDashboard.putNumber("Elevator Max", kMaxOutput);
             SmartDashboard.putNumber("Elevator Min", kMinOutput);
+            SmartDashboard.putNumber("Elevator Target", m_target);
 
-            reapplyPID();
         }
+        
+        reapplyPID();
 
         m_encoder.setPosition(0.0);
 
@@ -104,7 +107,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     private void setupDashboard() {
-        DashboardStore.add("Elevator Target", targetSupplier());
+        // DashboardStore.add("Elevator Target", targetSupplier());
         DashboardStore.add("Elevator Velocity", m_encoder::getVelocity);
         DashboardStore.add("Elevator Position", m_encoder::getPosition);
     }
@@ -123,8 +126,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     /** PID Commands */
-    public Command runToPositionCommand(ElevatorPosition position) {
-        return runOnce(() -> runToPosition(position));
+    public Command runToPositionCommand(Supplier<ElevatorPosition> position) {
+        return runOnce(() -> runToPosition(position.get()));
     }
 
     private void runToPosition(ElevatorPosition position) {
@@ -166,6 +169,7 @@ public class ElevatorSubsystem extends SubsystemBase {
             double ff = SmartDashboard.getNumber("Elevator FF", kFF);
             double max = SmartDashboard.getNumber("Elevator Max", kMaxOutput);
             double min = SmartDashboard.getNumber("Elevator Min", kMinOutput);
+            double target = SmartDashboard.getNumber("Elevator Target", m_target);
 
             // if PID coefficients on SmartDashboard have changed, write new values to
             // controller
@@ -185,6 +189,10 @@ public class ElevatorSubsystem extends SubsystemBase {
                 kMinOutput = min;
                 kMaxOutput = max;
                 reapplyPID();
+            }
+            if (target != m_target) {
+                m_target = target;
+                m_pid.setReference(m_target, ControlType.kPosition);
             }
         }
     }
