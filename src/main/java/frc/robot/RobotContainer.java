@@ -33,7 +33,7 @@ import frc.robot.vision.Limelight;
 public class RobotContainer {
     // Create the robot's subsystems
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
-    private final Limelight m_limelight = new Limelight();
+    // private final Limelight m_limelight = new Limelight();
     private final CoralInfeed m_coralInfeed = new CoralInfeed();
     private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
     private final AlgaeInfeed m_algae = new AlgaeInfeed();
@@ -48,10 +48,10 @@ public class RobotContainer {
 
     private SendableChooser<Command> autoChooser;
 
-    private final Command visionReefScoreLeft = ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
-            () -> m_driverController.getLeftTriggerAxis(), () -> -m_driverController.getLeftX());
-    private final Command visionReefScoreRight = ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
-            () -> m_driverController.getRightTriggerAxis(), () -> -m_driverController.getLeftX());
+    // private final Command visionReefScoreLeft = ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
+    //         () -> m_driverController.getLeftTriggerAxis(), () -> -m_driverController.getLeftX());
+    // private final Command visionReefScoreRight = ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
+    //         () -> m_driverController.getRightTriggerAxis(), () -> -m_driverController.getLeftX());
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
@@ -90,8 +90,8 @@ public class RobotContainer {
     private void configureNamedCommands() {
         // TODO: This will contain all auto named commands.
 
-        NamedCommands.registerCommand("Reef Left", visionReefScoreLeft);
-        NamedCommands.registerCommand("Reef Right", visionReefScoreRight);
+        // NamedCommands.registerCommand("Reef Left", visionReefScoreLeft);
+        // NamedCommands.registerCommand("Reef Right", visionReefScoreRight);
 
         NamedCommands.registerCommand("L1", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Level1));
         NamedCommands.registerCommand("L2", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Level2));
@@ -135,65 +135,43 @@ public class RobotContainer {
         // ===================
 
         /* LT/RT: Move Algae Pivot */
-        m_driverController.rightBumper().whileTrue(m_algae.runPivotCommand(0.2)).onFalse(m_algae.stopPivotCommand());
-        m_driverController.leftBumper().whileTrue(m_algae.runPivotCommand(-0.2)).onFalse(m_algae.stopPivotCommand());
+        m_driverController.rightBumper().onTrue(m_algae.toggleCommand());
 
         /* X/B: Algae Infeed/Outfeed */
-        m_driverController.leftTrigger(0.1).whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.intakeCommand(0.6));
-        m_driverController.rightTrigger(0.1).whileTrue(m_algae.intakeCommand(-0.4))
-                .onFalse(m_algae.stopIntakeCommand());
+        m_driverController.leftTrigger(0.1).onTrue(m_algae.intakeCommand(0.8));
 
         /* Start: Reset Odometry */
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
 
+        // TODO: Default to deploy and remove l1
+
         // Aimbot
-        m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(
-                m_limelight, () -> getXSpeed(),
-                () -> getYSpeed()));
+        // m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(
+        //         m_limelight, () -> getXSpeed(),
+        //         () -> getYSpeed()));
 
-        // Set X Command
-        m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
+        // // Set X Command
+        // m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
 
-        // Alignement
-        m_driverController.leftStick().whileTrue(visionReefScoreLeft);
+        // // Alignement
+        // m_driverController.leftStick().whileTrue(visionReefScoreLeft);
 
-        m_driverController.rightStick().whileTrue(visionReefScoreRight);
+        // m_driverController.rightStick().whileTrue(visionReefScoreRight);
 
         // =====================
         // OPERATOR CONTROLLER
         // =====================
-
-        /* D-Pad Up/Down: Move Elevator */
-        m_operatorController.povUp().onTrue(m_elevator.runElevatorCommand(0.2))
-                .onFalse(m_elevator.stopElevatorCommand());
-        m_operatorController.povDown().onTrue(m_elevator.runElevatorCommand(-0.2))
-                .onFalse(m_elevator.stopElevatorCommand());
-
-        m_operatorController.leftBumper().whileTrue(m_coralInfeed.runPivotCommand(-0.5))
-                .onFalse(m_coralInfeed.stopPivotCommand());
-        m_operatorController.rightBumper().whileTrue(m_coralInfeed.runPivotCommand(0.5))
-                .onFalse(m_coralInfeed.stopPivotCommand());
-
         /* Y: Cycle Elevator */
         m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
-        /* TMP: Run Elevator to L2 */
-        // m_operatorController.y().onTrue(m_elevator.runToPositionCommand(ElevatorPosition.Level2));
 
-        /* TMP: D-Pad Left/Right: Run Coral Infeed to L2/Feeder */
-        m_operatorController.povLeft().onTrue(m_coralInfeed.runToPositionCommand(() -> ElevatorPosition.Level2));
-        m_operatorController.povRight()
-                .onTrue(m_coralInfeed.runToPositionCommand(() -> ElevatorPosition.FeederStation));
+        /* A: Feeder Station */
+        m_operatorController.a().onTrue(CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation));
 
-        /* TMP: LS/RS: Deploy/Stow Algae Infeed */
-        // m_operatorController.leftStick().onTrue(m_algae.toggleCommand());
-        m_operatorController.leftStick().onTrue(m_algae.deployCommand());
-        m_operatorController.rightStick().onTrue(m_algae.stowCommand());
+        m_operatorController.leftTrigger().whileTrue(m_coralInfeed.intakeCommand(-0.8)).onFalse(m_coralInfeed.stopIntakeCommand());
+        m_operatorController.rightTrigger().whileTrue(m_coralInfeed.intakeCommand(0.5)).onFalse(m_coralInfeed.stopIntakeCommand());
 
-        m_operatorController.a().whileTrue(m_coralInfeed.intakeCommand(-0.8));
-        m_operatorController.b().whileTrue(m_coralInfeed.intakeCommand(0.8));
-
-        m_operatorController.leftTrigger(0.1).whileTrue(m_algae.intakeCommand(-0.8));
-        m_operatorController.rightTrigger(-0.1).whileTrue(m_algae.intakeCommand(0.8));
+        m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.8)).onFalse(m_algae.stopIntakeCommand());
+        m_operatorController.rightBumper().whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.stopIntakeCommand());
 
     }
 
