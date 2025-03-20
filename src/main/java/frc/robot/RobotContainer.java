@@ -124,9 +124,9 @@ public class RobotContainer {
                                 true),
                         m_robotDrive));
 
-        // ===================
+        // ==================
         // DRIVER CONTROLLER
-        // ===================
+        // ==================
 
         /* RB: Toggle Algae Infeed */
         m_driverController.rightBumper().onTrue(m_algae.toggleCommand());
@@ -151,9 +151,17 @@ public class RobotContainer {
         /* A (right): Vision Score Right */
         m_driverController.a().whileTrue(visionReefScoreRight);
 
-        // =====================
+        // ==============
+        // DRIVER MANUAL
+        // ==============
+
+        /* D-Pad Up/Down: Algae Infeed */
+        m_driverController.povUp().whileTrue(m_algae.runPivotCommand(0.3)).onFalse(m_algae.holdPositionCommand());
+        m_driverController.povDown().whileTrue(m_algae.runPivotCommand(-0.3)).onFalse(m_algae.holdPositionCommand());
+
+        // ====================
         // OPERATOR CONTROLLER
-        // =====================
+        // ====================
 
         /* Y: Cycle Elevator */
         m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
@@ -176,6 +184,20 @@ public class RobotContainer {
         /* LB/RB: Algae Outfeed/Infeed */
         m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.8)).onFalse(m_algae.stopIntakeCommand());
         m_operatorController.rightBumper().whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.stopIntakeCommand());
+
+        // ================
+        // OPERATOR MANUAL
+        // ================
+
+        /* Left Stick Y (Axis 1): Elevator */
+        m_operatorController.axisMagnitudeGreaterThan(1, 0.2)
+                .whileTrue(m_elevator.runElevatorCommand(() -> -m_operatorController.getLeftY()))
+                .onFalse(m_elevator.holdPositionCommand());
+
+        /* Right Stick Y (Axis 5): Coral Infeed */
+        m_operatorController.axisMagnitudeGreaterThan(5, 0.2)
+                .whileTrue(m_coralInfeed.runPivotCommand(() -> -m_operatorController.getRightY()))
+                .onFalse(m_coralInfeed.holdPositionCommand());
 
     }
 

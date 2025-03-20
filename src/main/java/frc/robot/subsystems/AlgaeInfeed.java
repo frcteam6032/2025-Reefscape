@@ -125,6 +125,10 @@ public class AlgaeInfeed extends SubsystemBase {
                 () -> m_target == DEPLOY_ANGLE);
     }
 
+    public Command holdPositionCommand() {
+        return runOnce(() -> m_pid.setReference(m_encoder.getPosition(), ControlType.kPosition));
+    }
+
     /** Encoder Stuff */
     private double getPosition() {
         return m_encoder.getPosition();

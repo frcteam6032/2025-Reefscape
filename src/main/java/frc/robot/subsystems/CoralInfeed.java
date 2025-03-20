@@ -99,6 +99,10 @@ public class CoralInfeed extends SubsystemBase {
         m_pid.setReference(m_target * DEG_TO_ROT, ControlType.kPosition);
     }
 
+    public Command holdPositionCommand() {
+        return runOnce(() -> m_pid.setReference(m_encoder.getPosition(), ControlType.kPosition));
+    }
+
     /** Encoder */
     private double getPosition() {
         return m_encoder.getPosition();
@@ -117,8 +121,8 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     /** Vbus Commands */
-    public Command runPivotCommand(double value) {
-        return runOnce(() -> runPivot(value));
+    public Command runPivotCommand(DoubleSupplier value) {
+        return runOnce(() -> runPivot(value.getAsDouble()));
     }
 
     private void runPivot(double value) {
@@ -126,7 +130,7 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     public Command stopPivotCommand() {
-        return runPivotCommand(0.0);
+        return runPivotCommand(() -> 0.0);
     }
 
     /* Intake Commands */

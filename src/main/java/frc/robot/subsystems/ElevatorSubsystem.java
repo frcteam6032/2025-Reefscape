@@ -88,12 +88,12 @@ public class ElevatorSubsystem extends SubsystemBase {
         m_motor.set(speed);
     }
 
-    public Command runElevatorCommand(double speed) {
-        return runOnce(() -> set(speed));
+    public Command runElevatorCommand(DoubleSupplier speed) {
+        return runOnce(() -> set(speed.getAsDouble()));
     }
 
     public Command stopElevatorCommand() {
-        return runElevatorCommand(0.0);
+        return runElevatorCommand(() -> 0.0);
     }
 
     /** PID Commands */
@@ -104,6 +104,10 @@ public class ElevatorSubsystem extends SubsystemBase {
     private void runToPosition(ElevatorPosition position) {
         m_target = position.Height;
         m_pid.setReference(m_target, ControlType.kPosition);
+    }
+
+    public Command holdPositionCommand() {
+        return runOnce(() -> m_pid.setReference(m_encoder.getPosition(), ControlType.kPosition));
     }
 
     /** Encoder & Target */
