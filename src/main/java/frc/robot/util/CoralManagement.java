@@ -15,7 +15,7 @@ import frc.robot.subsystems.ElevatorSubsystem;
 public class CoralManagement {
     private static CoralInfeed infeed;
     private static ElevatorSubsystem elevator;
-    private static ElevatorPosition targetPosition = ElevatorPosition.Home;
+    public static ElevatorPosition targetPosition = ElevatorPosition.Home;
 
     public static void init(CoralInfeed Infeed, ElevatorSubsystem Elevator) {
         CoralManagement.infeed = Infeed;
@@ -26,9 +26,6 @@ public class CoralManagement {
 
     private static void cyclePosition() {
         switch (targetPosition) {
-            case Level1:
-                targetPosition = ElevatorPosition.Level2;
-                break;
             case Level2:
                 targetPosition = ElevatorPosition.Level3;
                 break;
@@ -36,7 +33,7 @@ public class CoralManagement {
                 targetPosition = ElevatorPosition.Home;
                 break;
             default:
-                targetPosition = ElevatorPosition.Level1;
+                targetPosition = ElevatorPosition.Level2;
                 break;
         }
     }

@@ -3,6 +3,7 @@ package frc.robot.commands;
 import java.util.function.DoubleSupplier;
 
 import org.ejml.dense.row.SpecializedOps_DDRM;
+import org.ejml.dense.row.decompose.UtilDecompositons_CDRM;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -12,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ReefAlignmentConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.util.Utils;
 import frc.robot.vision.Limelight;
 
 public class ReefScoreCorrectionCommand extends Command {
@@ -56,13 +58,13 @@ public class ReefScoreCorrectionCommand extends Command {
         double error = m_driveSubsystem.nearest60error();
         double rotationOutput = DriveSubsystem.controller.calculate(error);
         // Normalize
-        double rotationCommand = rotationOutput / DriveConstants.kMaxAngularSpeed;
+        double rotationCommand = -1 * (rotationOutput / DriveConstants.kMaxAngularSpeed);
 
         boolean hasTarget = m_limelight.isTargetValid();
         if (hasTarget) {
             double offset = -m_limelight.getTX();
             double distanceToTarget = m_limelight.getDistanceReef();
-            SmartDashboard.putNumber("Distance", distanceToTarget);
+            SmartDashboard.putNumber("Distance (actual)", distanceToTarget);
 
             // We need to move where the center of the target is
             // We have the TX and we need to solve the triangle (distance)
@@ -73,9 +75,9 @@ public class ReefScoreCorrectionCommand extends Command {
             double yComponent = (Math.sin(Math.toRadians(offset)) * distanceToTarget) + m_targetOffset;
 
             // Normalize the vector
-            double magnitude = Math.sqrt(Math.pow(xComponent, 2) + Math.pow(yComponent, 2));
-            double strafeSpeedX = xComponent / magnitude;
-            double strafeSpeedY = yComponent / magnitude;
+            double magnitude = Utils.getMagnitudeVector(xComponent, yComponent);
+            double strafeSpeedX = Utils.normalizeVector(xComponent, magnitude);
+            double strafeSpeedY = Utils.normalizeVector(yComponent, magnitude);
 
             backupVectorX = strafeSpeedX;
             backupVectorY = strafeSpeedY;

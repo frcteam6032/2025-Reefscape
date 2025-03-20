@@ -7,8 +7,10 @@
 
 package frc.robot.vision;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -65,9 +67,9 @@ public class Limelight {
         // distance = (targetHeight - cameraHeight) / tan(cameraAngle + targetAngle)
         // 22 inches from the floor to the camera
         // 26.5 inches from the floor to the target
-        double targetHeightMeters = 0.24;
-        double cameraHeightMeters = 0.6;
-        double cameraAngle = -21.5;
+        double targetHeightMeters = Units.inchesToMeters(10);
+        double cameraHeightMeters = Units.inchesToMeters(19);
+        double cameraAngle = -24.1;
         double targetAngle = getTY();
         double distance = (targetHeightMeters - cameraHeightMeters)
                 / Math.tan(Math.toRadians(cameraAngle + targetAngle));

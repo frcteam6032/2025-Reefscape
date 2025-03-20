@@ -15,4 +15,12 @@ public class Utils {
                 controllerInput * (BASE_SPEED
                         + trigger * (1 - BASE_SPEED)));
     }
+
+    public static double normalizeVector(double vector, double magnitude) {
+        return vector / magnitude;
+    }
+    
+    public static double getMagnitudeVector(double x, double y) {
+        return Math.sqrt(x * x + y * y);
+    }
 }

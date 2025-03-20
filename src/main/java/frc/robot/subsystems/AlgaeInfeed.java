@@ -48,7 +48,7 @@ public class AlgaeInfeed extends SubsystemBase {
     private static final double POSITION_THRESHOLD = 5;
 
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
-            .forwardSoftLimit(MAX_ANGLE).reverseSoftLimit(MIN_ANGLE )
+            .forwardSoftLimit(MAX_ANGLE).reverseSoftLimit(MIN_ANGLE)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
     private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
@@ -145,10 +145,9 @@ public class AlgaeInfeed extends SubsystemBase {
 
     public Command toggleCommand() {
         return Commands.either(
-            runToAngleCommand(DEPLOY_ANGLE),
-            runToAngleCommand(STOW_ANGLE),
-            () -> m_target == STOW_ANGLE
-        );
+                runToAngleCommand(STOW_ANGLE),
+                runToAngleCommand(DEPLOY_ANGLE),
+                () -> m_target == DEPLOY_ANGLE);
     }
 
     /** Encoder Stuff */
@@ -191,8 +190,6 @@ public class AlgaeInfeed extends SubsystemBase {
             double ff = SmartDashboard.getNumber("Algae FF", kFF);
             double max = SmartDashboard.getNumber("Algae Max", kMaxOutput);
             double min = SmartDashboard.getNumber("Algae Min", kMinOutput);
-
-            
 
             // if PID coefficients on SmartDashboard have changed, write new values to
             // controller
