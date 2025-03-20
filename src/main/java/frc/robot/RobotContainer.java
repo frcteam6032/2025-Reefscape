@@ -111,6 +111,9 @@ public class RobotContainer {
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
+    /**
+     * DONT CHANGE THESE
+     */
     private void configureButtonBindings() {
         // Setting up driver commands
 
@@ -191,14 +194,13 @@ public class RobotContainer {
 
         /* Left Stick Y (Axis 1): Elevator */
         m_operatorController.axisMagnitudeGreaterThan(1, 0.2)
-                .whileTrue(m_elevator.runElevatorCommand(() -> -m_operatorController.getLeftY()))
+                .whileTrue(m_elevator.runElevatorCommand(() -> -0.5 * m_operatorController.getLeftY()))
                 .onFalse(m_elevator.holdPositionCommand());
 
         /* Right Stick Y (Axis 5): Coral Infeed */
         m_operatorController.axisMagnitudeGreaterThan(5, 0.2)
-                .whileTrue(m_coralInfeed.runPivotCommand(() -> -m_operatorController.getRightY()))
+                .whileTrue(m_coralInfeed.runPivotCommand(() -> -0.5 * m_operatorController.getRightY()))
                 .onFalse(m_coralInfeed.holdPositionCommand());
-
     }
 
     // Get the selected auto command
