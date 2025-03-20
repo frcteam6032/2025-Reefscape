@@ -43,7 +43,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 public class DriveSubsystem extends SubsystemBase {
     public static final double ROTATE_kP = 0.22;
     public static final double ROTATE_kD = 0.006;
-    private static final double ALIGNMENT_DEADBAND = 1.5;
+    // private static final double ALIGNMENT_DEADBAND = 1.5;
     public static final PIDController controller = new PIDController(DriveSubsystem.ROTATE_kP, 0.0,
             DriveSubsystem.ROTATE_kD);
 
@@ -363,6 +363,7 @@ public class DriveSubsystem extends SubsystemBase {
             return;
         }
 
+        @SuppressWarnings("resource")
         PIDController controller = new PIDController(0.1, 0.0, 0.005);
         // controller.enableContinuousInput(-180, 180);
 

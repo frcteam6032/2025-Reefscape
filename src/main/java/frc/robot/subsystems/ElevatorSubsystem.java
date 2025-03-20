@@ -1,10 +1,8 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.util.DashboardStore;
 import frc.robot.util.CoralManagement.ElevatorPosition;
 
@@ -28,20 +26,14 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.LimitSwitchConfig.Type;
 
 public class ElevatorSubsystem extends SubsystemBase {
-    /* TMP: PID Constants */
-    private boolean enablePIDTuning = false;
-
-    private double kP = 0.1;
-    private double kD = 0.0;
-    private double kFF = 0.0;
-    private double kMaxOutput = 0.95;
-    private double kMinOutput = -0.95;
+    private static final double kP = 0.1;
+    private static final double MAX_OUTPUT = 0.95;
+    private static final double MIN_OUTPUT = -0.95;
 
     private static final int CAN_ID = 13;
 
     private static final double POSITION_THRESHOLD = 1.5;
 
-    // gonna do this stuff in rotations
     private static final double MAX_POS = 158;
     private static final double MIN_POS = 0.5;
 
@@ -52,12 +44,16 @@ public class ElevatorSubsystem extends SubsystemBase {
     private static final LimitSwitchConfig LIMIT_SWITCH = new LimitSwitchConfig()
             .reverseLimitSwitchType(Type.kNormallyClosed).reverseLimitSwitchEnabled(false);
 
-    private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
+            private static final ClosedLoopConfig CLOSED_LOOP_CONFIG = new ClosedLoopConfig()
+            .p(kP)
+            .maxOutput(MAX_OUTPUT)
+            .minOutput(MIN_OUTPUT);
 
     private SparkBaseConfig CONFIG = new SparkMaxConfig().idleMode(IdleMode.kBrake)
             .smartCurrentLimit(50)
             .inverted(true)
             .apply(SOFT_LIMITS)
+            .apply(CLOSED_LOOP_CONFIG)
             .apply(LIMIT_SWITCH);
 
     private double m_target = 0;
@@ -74,40 +70,15 @@ public class ElevatorSubsystem extends SubsystemBase {
                 PersistMode.kPersistParameters);
 
         setupDashboard();
-
-        if (enablePIDTuning) {
-            // display PID coefficients on SmartDashboard
-            SmartDashboard.putNumber("Elevator P", kP);
-            SmartDashboard.putNumber("Elevator D", kD);
-            SmartDashboard.putNumber("Elevator FF", kFF);
-            SmartDashboard.putNumber("Elevator Max", kMaxOutput);
-            SmartDashboard.putNumber("Elevator Min", kMinOutput);
-            SmartDashboard.putNumber("Elevator Target", m_target);
-
-        }
         
-        reapplyPID();
-
         m_encoder.setPosition(0.0);
 
         // When the limit switch is tripped, reset encoder
         // new Trigger(this::limitSwitchTripped).onTrue(runOnce(() -> m_encoder.setPosition(0.0)));
     }
 
-    private void reapplyPID() {
-        closedLoopConfig.pidf(kP, 0.0, kD, kFF);
-        closedLoopConfig.maxOutput(kMaxOutput);
-        closedLoopConfig.minOutput(kMinOutput);
-
-        CONFIG.apply(closedLoopConfig);
-        m_motor.configure(
-                CONFIG,
-                ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters);
-    }
-
     private void setupDashboard() {
-        // DashboardStore.add("Elevator Target", targetSupplier());
+        DashboardStore.add("Elevator Target", targetSupplier());
         DashboardStore.add("Elevator Velocity", m_encoder::getVelocity);
         DashboardStore.add("Elevator Position", m_encoder::getPosition);
     }
@@ -157,43 +128,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     }
 
     /** Limit Switch */
-    private boolean limitSwitchTripped() {
-        return m_motor.getReverseLimitSwitch().isPressed();
-    }
-
-    @Override
-    public void periodic() {
-        if (enablePIDTuning) {
-            double p = SmartDashboard.getNumber("Elevator P", kP);
-            double d = SmartDashboard.getNumber("Elevator D", kD);
-            double ff = SmartDashboard.getNumber("Elevator FF", kFF);
-            double max = SmartDashboard.getNumber("Elevator Max", kMaxOutput);
-            double min = SmartDashboard.getNumber("Elevator Min", kMinOutput);
-            double target = SmartDashboard.getNumber("Elevator Target", m_target);
-
-            // if PID coefficients on SmartDashboard have changed, write new values to
-            // controller
-            if ((p != kP)) {
-                kP = p;
-                reapplyPID();
-            }
-            if ((d != kD)) {
-                kD = d;
-                reapplyPID();
-            }
-            if ((ff != kFF)) {
-                kFF = ff;
-                reapplyPID();
-            }
-            if ((max != kMaxOutput) || (min != kMinOutput)) {
-                kMinOutput = min;
-                kMaxOutput = max;
-                reapplyPID();
-            }
-            if (target != m_target) {
-                m_target = target;
-                m_pid.setReference(m_target, ControlType.kPosition);
-            }
-        }
-    }
+    // private boolean limitSwitchTripped() {
+    //     return m_motor.getReverseLimitSwitch().isPressed();
+    // }
 }

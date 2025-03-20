@@ -24,17 +24,10 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 public class CoralInfeed extends SubsystemBase {
-    /* TMP: PID Constants */
-    private boolean enablePIDTuning = false;
-
-    private double kP = 0.1;
-    private double kD = 0.0;
-    private double kFF = 0.0;
-    private double kMaxOutput = 0.4;
-    private double kMinOutput = -0.4;
+    private static final double kP = 0.1;
+    private static final double MAX_OUTPUT = 0.4;
+    private static final double MIN_OUTPUT = -0.4;
 
     private static final int PIVOT_ID = 11;
     private static final int INTAKE_ID = 12;
@@ -53,17 +46,21 @@ public class CoralInfeed extends SubsystemBase {
             .forwardSoftLimit(MAX_ANGLE * DEG_TO_ROT).reverseSoftLimit(MIN_ANGLE * DEG_TO_ROT)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
-    private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
+    private static final ClosedLoopConfig CLOSED_LOOP_CONFIG = new ClosedLoopConfig()
+            .p(kP)
+            .maxOutput(MAX_OUTPUT)
+            .minOutput(MIN_OUTPUT);
 
     private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(true)
             .smartCurrentLimit(40);
 
-    private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
+    private final SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(false)
             .smartCurrentLimit(40)
+            .apply(CLOSED_LOOP_CONFIG)
             .apply(SOFT_LIMITS);
 
     private final SparkMax m_pivotMotor = new SparkMax(PIVOT_ID, MotorType.kBrushless);
@@ -84,35 +81,12 @@ public class CoralInfeed extends SubsystemBase {
 
         setupDashboard();
 
-        if (enablePIDTuning) {
-            // display PID coefficients on SmartDashboard
-            SmartDashboard.putNumber("Coral P", kP);
-            SmartDashboard.putNumber("Coral D", kD);
-            SmartDashboard.putNumber("Coral FF", kFF);
-            SmartDashboard.putNumber("Coral Max", kMaxOutput);
-            SmartDashboard.putNumber("Coral Min", kMinOutput);
-            SmartDashboard.putNumber("Coral Target", m_target);
-        }
-
-        reapplyPID();
-
         m_encoder.setPosition(0.0);
     }
 
-    private void reapplyPID() {
-        closedLoopConfig.pidf(kP, 0.0, kD, kFF);
-        closedLoopConfig.maxOutput(kMaxOutput);
-        closedLoopConfig.minOutput(kMinOutput);
-
-        PIVOT_CONFIG.apply(closedLoopConfig);
-        m_pivotMotor.configure(PIVOT_CONFIG, ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters);
-    }
-
     private void setupDashboard() {
-        DashboardStore.add("Coral Pivot", this::getPosition);
+        DashboardStore.add("Coral Pivot", () -> getPosition() * ROT_TO_DEG);
         DashboardStore.add("Coral Target", () -> m_target);
-        DashboardStore.add("Coral Target NU", () -> m_target * DEG_TO_ROT);
     }
 
     /** Pivot Commands */
@@ -174,46 +148,5 @@ public class CoralInfeed extends SubsystemBase {
 
     public Command stopIntakeCommand() {
         return intakeCommand(0.0);
-    }
-
-    public void coast() {
-        PIVOT_CONFIG.idleMode(IdleMode.kCoast);
-        m_pivotMotor.configure(PIVOT_CONFIG, ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters);
-    }
-
-    @Override
-    public void periodic() {
-        if (enablePIDTuning) {
-
-            double p = SmartDashboard.getNumber("Coral P", kP);
-            double d = SmartDashboard.getNumber("Coral D", kD);
-            double ff = SmartDashboard.getNumber("Coral FF", kFF);
-            double max = SmartDashboard.getNumber("Coral Max", kMaxOutput);
-            double min = SmartDashboard.getNumber("Coral Min", kMinOutput);
-
-            // if PID coefficients on SmartDashboard have changed, write new values to
-            // controller
-            if ((p != kP)) {
-                kP = p;
-                reapplyPID();
-            }
-            if ((d != kD)) {
-                kD = d;
-                reapplyPID();
-            }
-            if ((ff != kFF)) {
-                kFF = ff;
-                reapplyPID();
-            }
-            if ((max != kMaxOutput) || (min != kMinOutput)) {
-                kMinOutput = min;
-                kMaxOutput = max;
-                reapplyPID();
-            }
-
-            double target = SmartDashboard.getNumber("Coral Target", m_target);
-            // m_pid.setReference(target * DEG_TO_ROT, ControlType.kPosition);
-        }
     }
 }

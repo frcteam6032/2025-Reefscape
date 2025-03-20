@@ -23,17 +23,10 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 public class AlgaeInfeed extends SubsystemBase {
-    /* TMP: PID Constants */
-    private boolean enablePIDTuning = false;
-
-    private double kP = 0.1;
-    private double kD = 0.0;
-    private double kFF = 0.0;
-    private double kMaxOutput = 0.3;
-    private double kMinOutput = -0.3;
+    private static final double kP = 0.1;
+    private static final double MAX_OUTPUT = 0.3;
+    private static final double MIN_OUTPUT = -0.3;
 
     private static final int PIVOT_ID = 9;
     private static final int INTAKE_ID = 10;
@@ -51,18 +44,22 @@ public class AlgaeInfeed extends SubsystemBase {
             .forwardSoftLimit(MAX_ANGLE).reverseSoftLimit(MIN_ANGLE)
             .forwardSoftLimitEnabled(true).reverseSoftLimitEnabled(true);
 
-    private ClosedLoopConfig closedLoopConfig = new ClosedLoopConfig();
+    private static final ClosedLoopConfig CLOSED_LOOP_CONFIG = new ClosedLoopConfig()
+            .p(kP)
+            .maxOutput(MAX_OUTPUT)
+            .minOutput(MIN_OUTPUT);
 
     private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(true)
             .smartCurrentLimit(20);
 
-    private SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
+    private final SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(false)
-            .smartCurrentLimit(30);
-    // .apply(SOFT_LIMITS);
+            .smartCurrentLimit(30)
+            .apply(CLOSED_LOOP_CONFIG)
+            .apply(SOFT_LIMITS);
 
     private final SparkMax m_pivotMotor = new SparkMax(PIVOT_ID, MotorType.kBrushless);
     private final SparkMax m_intakeMotor = new SparkMax(INTAKE_ID, MotorType.kBrushless);
@@ -82,29 +79,7 @@ public class AlgaeInfeed extends SubsystemBase {
 
         setupDashboard();
 
-        if (enablePIDTuning) {
-            // display PID coefficients on SmartDashboard
-            SmartDashboard.putNumber("Algae P", kP);
-            SmartDashboard.putNumber("Algae D", kD);
-            SmartDashboard.putNumber("Algae FF", kFF);
-            SmartDashboard.putNumber("Algae Max", kMaxOutput);
-            SmartDashboard.putNumber("Algae Min", kMinOutput);
-            SmartDashboard.putNumber("Algae Target", m_target);
-        }
-
-        reapplyPID();
-
         m_encoder.setPosition(0.0);
-    }
-
-    private void reapplyPID() {
-        closedLoopConfig.pidf(kP, 0.0, kD, kFF);
-        closedLoopConfig.maxOutput(kMaxOutput);
-        closedLoopConfig.minOutput(kMinOutput);
-
-        PIVOT_CONFIG.apply(closedLoopConfig);
-        m_pivotMotor.configure(PIVOT_CONFIG, ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters);
     }
 
     private void setupDashboard() {
@@ -179,40 +154,5 @@ public class AlgaeInfeed extends SubsystemBase {
 
     public Command stopIntakeCommand() {
         return intakeCommand(0.0);
-    }
-
-    @Override
-    public void periodic() {
-        if (enablePIDTuning) {
-
-            double p = SmartDashboard.getNumber("Algae P", kP);
-            double d = SmartDashboard.getNumber("Algae D", kD);
-            double ff = SmartDashboard.getNumber("Algae FF", kFF);
-            double max = SmartDashboard.getNumber("Algae Max", kMaxOutput);
-            double min = SmartDashboard.getNumber("Algae Min", kMinOutput);
-
-            // if PID coefficients on SmartDashboard have changed, write new values to
-            // controller
-            if ((p != kP)) {
-                kP = p;
-                reapplyPID();
-            }
-            if ((d != kD)) {
-                kD = d;
-                reapplyPID();
-            }
-            if ((ff != kFF)) {
-                kFF = ff;
-                reapplyPID();
-            }
-            if ((max != kMaxOutput) || (min != kMinOutput)) {
-                kMinOutput = min;
-                kMaxOutput = max;
-                reapplyPID();
-            }
-
-            // double target = SmartDashboard.getNumber("Algae Target", m_target);
-            // m_pid.setReference(target, ControlType.kPosition);
-        }
     }
 }
