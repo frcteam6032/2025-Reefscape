@@ -81,6 +81,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         DashboardStore.add("Elevator Target", targetSupplier());
         DashboardStore.add("Elevator Velocity", m_encoder::getVelocity);
         DashboardStore.add("Elevator Position", m_encoder::getPosition);
+        DashboardStore.add("Elevator (Inches)", () -> m_encoder.getPosition() * (26 / 180));
     }
 
     /** Vbus Commands */

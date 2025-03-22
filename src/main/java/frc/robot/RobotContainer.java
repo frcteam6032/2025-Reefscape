@@ -183,9 +183,8 @@ public class RobotContainer {
         m_operatorController.rightTrigger().whileTrue(m_coralInfeed.intakeCommand())
                 .onFalse(m_coralInfeed.stopIntakeCommand());
 
-        /* LB/RB: Algae Outfeed/Infeed */
+        /* LB: Algae Outfeed */
         m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.8)).onFalse(m_algae.stopIntakeCommand());
-        // m_operatorController.rightBumper().whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.stopIntakeCommand());
 
         // ================
         // OPERATOR MANUAL
@@ -198,7 +197,7 @@ public class RobotContainer {
 
         /* Right Stick Y (Axis 5): Coral Infeed */
         m_operatorController.axisMagnitudeGreaterThan(5, 0.2)
-                .whileTrue(m_coralInfeed.runPivotCommand(() -> -0.5 * m_operatorController.getRightY()))
+                .whileTrue(m_coralInfeed.runPivotCommand(() -> -0.35 * m_operatorController.getRightY()))
                 .onFalse(m_coralInfeed.holdPositionCommand());
     }
 

@@ -60,7 +60,7 @@ public class ReefScoreCorrectionCommand extends Command {
         if (hasTarget) {
             double offset = -m_limelight.getTX();
             double distanceToTarget = m_limelight.getDistanceReef();
-            SmartDashboard.putNumber("Distance (actual)", distanceToTarget);
+            SmartDashboard.putNumber("Distance (cam)", distanceToTarget);
 
             // We need to move where the center of the target is
             // We have the TX and we need to solve the triangle (distance)
@@ -83,6 +83,9 @@ public class ReefScoreCorrectionCommand extends Command {
 
         SmartDashboard.putNumber("X Comp", backupVectorX);
         SmartDashboard.putNumber("Y Comp", backupVectorY);
+        SmartDashboard.putNumber("Backup Dist", backupDistance);
+
+        
 
         double speedScaling = m_speed.getAsDouble() * ReefAlignmentConstants.kMaxSpeedPercentMultiplier;
         if (foundTarget) {

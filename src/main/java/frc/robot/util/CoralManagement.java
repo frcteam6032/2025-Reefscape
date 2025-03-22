@@ -46,12 +46,13 @@ public class CoralManagement {
         return cyclePositionsCommand().andThen(runToPositionCommand(() -> targetPosition));
     }
 
+    // 28.57
     public static enum ElevatorPosition {
-        Home(1, 10),
-        FeederStation(1.0, 53),
+        Home(15, 10),
+        FeederStation(1.0, 62),
         Level1(5, 245),
-        Level2(10, 245),
-        Level3(105, 245),
+        Level2(28.5, 245),
+        Level3(80.32, 225),
         Level4(-1, -1);
 
         public double Height;
