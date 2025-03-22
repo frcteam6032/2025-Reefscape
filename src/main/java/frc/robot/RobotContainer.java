@@ -135,7 +135,7 @@ public class RobotContainer {
         m_driverController.rightBumper().onTrue(m_algae.toggleCommand());
 
         /* LT: Algae Infeed */
-        m_driverController.leftTrigger().onTrue(m_algae.intakeCommand(0.8));
+        m_driverController.leftTrigger().onTrue(m_algae.intakeCommand(1.0));
 
         /* Start: Reset Odometry */
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
@@ -186,7 +186,7 @@ public class RobotContainer {
 
         /* LB/RB: Algae Outfeed/Infeed */
         m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.8)).onFalse(m_algae.stopIntakeCommand());
-        m_operatorController.rightBumper().whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.stopIntakeCommand());
+        // m_operatorController.rightBumper().whileTrue(m_algae.intakeCommand(0.8)).onFalse(m_algae.stopIntakeCommand());
 
         // ================
         // OPERATOR MANUAL

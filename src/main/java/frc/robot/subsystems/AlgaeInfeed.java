@@ -25,8 +25,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 public class AlgaeInfeed extends SubsystemBase {
     private static final double kP = 0.1;
-    private static final double MAX_OUTPUT = 0.3;
-    private static final double MIN_OUTPUT = -0.3;
+    private static final double MAX_OUTPUT = 0.2;
+    private static final double MIN_OUTPUT = -0.2;
 
     private static final int PIVOT_ID = 9;
     private static final int INTAKE_ID = 10;
