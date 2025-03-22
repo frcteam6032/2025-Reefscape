@@ -76,7 +76,7 @@ public class ReefScoreCorrectionCommand extends Command {
 
             backupVectorX = strafeSpeedX;
             backupVectorY = strafeSpeedY;
-            backupDistance = xComponent;
+            backupDistance = magnitude;
             foundTarget = true;
         }
 
@@ -89,10 +89,12 @@ public class ReefScoreCorrectionCommand extends Command {
             kP = MathUtil.clamp(kP, 0, 1);
             speedScaling = speedScaling * kP;
             // Slow down even more if we lost the target
-            speedScaling = hasTarget == false ? speedScaling * ReefAlignmentConstants.kHalfSpeedMultiplier
-                    : speedScaling;
+            if (!hasTarget)
+            {
+                speedScaling *= ReefAlignmentConstants.kLostTargetSlowdownMultiplier;
+            }
         } else { // Hasnt see a target yet
-            speedScaling *= ReefAlignmentConstants.kHalfSpeedMultiplier;
+            speedScaling *= ReefAlignmentConstants.kLostTargetSlowdownMultiplier;
         }
         SmartDashboard.putNumber("Speed scaling", speedScaling);
 

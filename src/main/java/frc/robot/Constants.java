@@ -139,8 +139,8 @@ public final class Constants {
     public static final class ReefAlignmentConstants {
         public static final double kMaxDist = 1;
         public static final double kMinDist = 0.05;
-        public static final double kMaxSpeedPercentMultiplier = 0.4;
-        public static final double kHalfSpeedMultiplier = 0.5;
+        public static final double kMaxSpeedPercentMultiplier = 0.5;
+        public static final double kLostTargetSlowdownMultiplier = 0.5;
         public static final double kFrameToCameraDistance = Units.inchesToMeters(11);
         public static final double kPreventUndVector = 0.03;
         public static final double kPipeOffset = Units.inchesToMeters(7.5);
