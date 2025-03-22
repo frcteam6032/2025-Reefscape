@@ -1,8 +1,11 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.util.CoralManagement.ElevatorPosition;
 import frc.robot.util.DashboardStore;
 
@@ -41,6 +44,8 @@ public class CoralInfeed extends SubsystemBase {
 
     private static final double ROT_TO_DEG = 360 / 60;
     private static final double DEG_TO_ROT = 1 / ROT_TO_DEG;
+
+    double lastIntakeVel = 0.0;
 
     private static final SoftLimitConfig SOFT_LIMITS = new SoftLimitConfig()
             .forwardSoftLimit(MAX_ANGLE * DEG_TO_ROT).reverseSoftLimit(MIN_ANGLE * DEG_TO_ROT)
@@ -147,11 +152,15 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     public Command autoScoreCommand() {
-        return intakeCommand().withTimeout(0.5);
+        return scoreCommand().andThen(Commands.waitSeconds(0.5)).andThen(stopIntakeCommand());
     }
 
     public Command smartIntakeCommand() {
-        return intakeCommand().until(this::hasPiece).finallyDo(() -> intake(0.0));
+        return intakeCommand()
+                .beforeStarting(() -> lastIntakeVel = 0.0)
+                .andThen(Commands.waitSeconds(1.0))
+                // .until(this::hasPiece)
+                .andThen(stopIntakeCommand());
     }
 
     private void intake(double value) {
@@ -162,10 +171,28 @@ public class CoralInfeed extends SubsystemBase {
         return setIntakeCommand(0.0);
     }
 
+    @Override
+    public void periodic() {
+        hasPiece();
+    }
+
     public boolean hasPiece() {
-        boolean speedLow = m_encoder.getVelocity() < 0.5;
+        double curVel = m_intakeMotor.getEncoder().getVelocity();
+        double accel = curVel - lastIntakeVel;
+        boolean slowingDown = accel < 0;
+        lastIntakeVel = curVel;
+        boolean speedLow = curVel < 10;
         boolean currentHigh = m_intakeMotor.getOutputCurrent() > 5.0;
-        boolean on = m_intakeMotor.getAppliedOutput() > 0.5;
-        return speedLow && currentHigh && on;
+        boolean on = Math.abs(m_intakeMotor.getAppliedOutput()) > 0.1;
+        SmartDashboard.putNumber("Encoder Vel", curVel);
+        SmartDashboard.putNumber("Current", m_intakeMotor.getOutputCurrent());
+        SmartDashboard.putNumber("On", m_intakeMotor.getAppliedOutput());
+
+        SmartDashboard.putBoolean("bool accel", slowingDown);
+        SmartDashboard.putBoolean("bool speed", speedLow);
+        SmartDashboard.putBoolean("bool current", currentHigh);
+        SmartDashboard.putBoolean("bool on", on);
+
+        return speedLow && currentHigh && on && slowingDown;
     }
 }

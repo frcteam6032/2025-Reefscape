@@ -37,12 +37,9 @@ public class RobotContainer {
     private final AlgaeInfeed m_algae = new AlgaeInfeed();
     private ElevatorPosition m_targetPosition = ElevatorPosition.Home;
 
-    private final Command feederStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation)
-            .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
-    private final Command homeStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Home)
-            .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
-    private final Command L3Station = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level3)
-            .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Level3));
+    private final Command feederStation;
+    private final Command homeStation;
+    private final Command L3Station;
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
@@ -82,7 +79,14 @@ public class RobotContainer {
 
         CoralManagement.init(m_coralInfeed, m_elevator);
 
-        initAutoChooser();
+        feederStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation)
+                .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
+
+        homeStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Home)
+                .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
+
+        L3Station = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level3)
+                .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Level3));
 
         configureNamedCommands();
 
@@ -90,13 +94,14 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Config buttons
+        initAutoChooser();
     }
 
     private void configureNamedCommands() {
         // TODO: This will contain all auto named commands.
 
-        NamedCommands.registerCommand("Vison Align Left", visionReefScoreLeft);
-        NamedCommands.registerCommand("Vision Align Right", visionReefScoreRight);
+        NamedCommands.registerCommand("Vision Align Left", visionReefScoreLeft.withTimeout(1.0));
+        NamedCommands.registerCommand("Vision Align Right", visionReefScoreRight.withTimeout(1.0));
 
         NamedCommands.registerCommand("Move L3", L3Station);
         NamedCommands.registerCommand("Move Feeder Station", feederStation);

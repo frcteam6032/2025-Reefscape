@@ -66,7 +66,7 @@ public class Limelight {
         // distance = (targetHeight - cameraHeight) / tan(cameraAngle + targetAngle)
         // 22 inches from the floor to the camera
         // 26.5 inches from the floor to the target
-        double targetHeightMeters = Units.inchesToMeters(10);
+        double targetHeightMeters = Units.inchesToMeters(12.125);
         double cameraHeightMeters = Units.inchesToMeters(19);
         double cameraAngle = -24.1;
         double targetAngle = getTY();
