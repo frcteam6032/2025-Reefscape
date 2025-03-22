@@ -134,16 +134,24 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     /* Intake Commands */
-    public Command intakeCommand(double value) {
+    private Command setIntakeCommand(double value) {
         return runOnce(() -> intake(value));
     }
 
     public Command scoreCommand() {
-        return intakeCommand(-0.5).withTimeout(0.5);
+        return setIntakeCommand(-0.8);
     }
 
-    public Command autoIntakeCommand() {
-        return intakeCommand(-0.5).withTimeout(0.5);
+    public Command intakeCommand() {
+        return setIntakeCommand(0.5);
+    }
+
+    public Command autoScoreCommand() {
+        return intakeCommand().withTimeout(0.5);
+    }
+
+    public Command smartIntakeCommand() {
+        return intakeCommand().until(this::hasPiece).finallyDo(() -> intake(0.0));
     }
 
     private void intake(double value) {
@@ -151,6 +159,13 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     public Command stopIntakeCommand() {
-        return intakeCommand(0.0);
+        return setIntakeCommand(0.0);
+    }
+
+    public boolean hasPiece() {
+        boolean speedLow = m_encoder.getVelocity() < 0.5;
+        boolean currentHigh = m_intakeMotor.getOutputCurrent() > 5.0;
+        boolean on = m_intakeMotor.getAppliedOutput() > 0.5;
+        return speedLow && currentHigh && on;
     }
 }

@@ -1,5 +1,7 @@
 package frc.robot;
 
+import org.opencv.features2d.Feature2D;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -34,6 +36,13 @@ public class RobotContainer {
     private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
     private final AlgaeInfeed m_algae = new AlgaeInfeed();
     private ElevatorPosition m_targetPosition = ElevatorPosition.Home;
+
+    private final Command feederStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation)
+            .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
+    private final Command homeStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Home)
+            .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
+    private final Command L3Station = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level3)
+            .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Level3));
 
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
@@ -86,24 +95,16 @@ public class RobotContainer {
     private void configureNamedCommands() {
         // TODO: This will contain all auto named commands.
 
-        NamedCommands.registerCommand("Reef Left", visionReefScoreLeft);
-        NamedCommands.registerCommand("Reef Right", visionReefScoreRight);
+        NamedCommands.registerCommand("Vison Align Left", visionReefScoreLeft);
+        NamedCommands.registerCommand("Vision Align Right", visionReefScoreRight);
 
-        NamedCommands.registerCommand("L1", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Level1));
-        NamedCommands.registerCommand("L2", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Level2));
-        NamedCommands.registerCommand("L3", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Level3));
-        NamedCommands.registerCommand("L4", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Level4));
-        NamedCommands.registerCommand("Feeder Station",
-                Commands.runOnce(() -> m_targetPosition = ElevatorPosition.FeederStation));
-
-        NamedCommands.registerCommand("Home", Commands.runOnce(() -> m_targetPosition = ElevatorPosition.Home));
-
-        NamedCommands.registerCommand("Move Elevator", CoralManagement.runToPositionCommand(() -> m_targetPosition));
+        NamedCommands.registerCommand("Move L3", L3Station);
+        NamedCommands.registerCommand("Move Feeder Station", feederStation);
 
         NamedCommands.registerCommand(
-                "Score", m_coralInfeed.scoreCommand());
+                "Score Timed", m_coralInfeed.autoScoreCommand());
 
-        NamedCommands.registerCommand("Intake", m_coralInfeed.intakeCommand(0.8));
+        NamedCommands.registerCommand("Smart Intake", m_coralInfeed.smartIntakeCommand());
     }
 
     private void initAutoChooser() {
@@ -170,18 +171,16 @@ public class RobotContainer {
         m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
 
         /* A: Feeder Station */
-        m_operatorController.a().onTrue(CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation)
-                .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home)));
+        m_operatorController.a().onTrue(feederStation);
 
         /* B: Go to Home */
-        m_operatorController.b().onTrue(CoralManagement.runToPositionCommand(() -> ElevatorPosition.Home)
-                .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home)));
+        m_operatorController.b().onTrue(homeStation);
 
         /* LT/RT: Coral Outfeed/Infeed */
-        m_operatorController.leftTrigger().whileTrue(m_coralInfeed.intakeCommand(-0.8))
+        m_operatorController.leftTrigger().whileTrue(m_coralInfeed.scoreCommand())
                 .onFalse(m_coralInfeed.stopIntakeCommand());
 
-        m_operatorController.rightTrigger().whileTrue(m_coralInfeed.intakeCommand(0.5))
+        m_operatorController.rightTrigger().whileTrue(m_coralInfeed.intakeCommand())
                 .onFalse(m_coralInfeed.stopIntakeCommand());
 
         /* LB/RB: Algae Outfeed/Infeed */

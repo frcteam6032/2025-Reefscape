@@ -56,6 +56,7 @@ public class ReefScoreCorrectionCommand extends Command {
         double rotationCommand = -1 * (rotationOutput / DriveConstants.kMaxAngularSpeed);
 
         boolean hasTarget = m_limelight.isTargetValid();
+        
         if (hasTarget) {
             double offset = -m_limelight.getTX();
             double distanceToTarget = m_limelight.getDistanceReef();
@@ -105,6 +106,7 @@ public class ReefScoreCorrectionCommand extends Command {
                 rotationCommand,
                 false);
     }
+
 
     // Called once the command ends or is interrupted.
     @Override
