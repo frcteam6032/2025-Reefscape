@@ -158,8 +158,8 @@ public class CoralInfeed extends SubsystemBase {
     public Command smartIntakeCommand() {
         return intakeCommand()
                 .beforeStarting(() -> lastIntakeVel = 0.0)
-                .andThen(Commands.waitSeconds(1.0))
-                // .until(this::hasPiece)
+                .andThen(Commands.waitSeconds(0.25))
+                .andThen(Commands.waitSeconds(5.0).until(this::hasPiece))
                 .andThen(stopIntakeCommand());
     }
 
