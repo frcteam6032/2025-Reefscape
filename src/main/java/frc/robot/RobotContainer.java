@@ -1,7 +1,5 @@
 package frc.robot;
 
-import org.opencv.features2d.Feature2D;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -35,7 +33,6 @@ public class RobotContainer {
     private final CoralInfeed m_coralInfeed = new CoralInfeed();
     private final ElevatorSubsystem m_elevator = new ElevatorSubsystem();
     private final AlgaeInfeed m_algae = new AlgaeInfeed();
-    private ElevatorPosition m_targetPosition = ElevatorPosition.Home;
 
     private final Command feederStation;
     private final Command homeStation;
@@ -50,14 +47,19 @@ public class RobotContainer {
 
     private SendableChooser<Command> autoChooser;
 
-    private final Command visionReefScoreLeft = ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
-            () -> 1, () -> -m_driverController.getLeftX());
-    private final Command visionReefScoreRight = ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
-            () -> 1, () -> -m_driverController.getLeftX());
-
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter thetaLimiter = new SlewRateLimiter(6.);
+
+    private Command visionReefScoreLeft() {
+        return ReefScoreCorrectionCommand.left(m_robotDrive, m_limelight,
+                () -> 1, () -> -m_driverController.getLeftX());
+    }
+
+    private Command visionReefScoreRight() {
+        return ReefScoreCorrectionCommand.right(m_robotDrive, m_limelight,
+                () -> 1, () -> -m_driverController.getLeftX());
+    }
 
     private double getRotationSpeed() {
         return MathUtil.applyDeadband(Utils.scaleDriverController(-m_driverController.getRightX(), thetaLimiter,
@@ -100,8 +102,8 @@ public class RobotContainer {
     private void configureNamedCommands() {
         // TODO: This will contain all auto named commands.
 
-        NamedCommands.registerCommand("Vision Align Left", visionReefScoreLeft.withTimeout(1.0));
-        NamedCommands.registerCommand("Vision Align Right", visionReefScoreRight.withTimeout(1.0));
+        NamedCommands.registerCommand("Vision Align Left", visionReefScoreLeft().withTimeout(1.0));
+        NamedCommands.registerCommand("Vision Align Right", visionReefScoreRight().withTimeout(1.0));
 
         NamedCommands.registerCommand("Move L3", L3Station);
         NamedCommands.registerCommand("Move Feeder Station", feederStation);
@@ -155,10 +157,10 @@ public class RobotContainer {
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
 
         /* B (left): Vision Score Left */
-        m_driverController.b().whileTrue(visionReefScoreLeft);
+        m_driverController.b().whileTrue(visionReefScoreLeft());
 
         /* A (right): Vision Score Right */
-        m_driverController.a().whileTrue(visionReefScoreRight);
+        m_driverController.a().whileTrue(visionReefScoreRight());
 
         // ==============
         // DRIVER MANUAL
@@ -190,6 +192,10 @@ public class RobotContainer {
 
         /* LB: Algae Outfeed */
         m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.8)).onFalse(m_algae.stopIntakeCommand());
+
+        /* RB: Slow Coral Outfeed */
+        m_operatorController.rightBumper().whileTrue(m_coralInfeed.setIntakeCommand(-0.2))
+                .onFalse(m_coralInfeed.stopIntakeCommand());
 
         // ================
         // OPERATOR MANUAL
