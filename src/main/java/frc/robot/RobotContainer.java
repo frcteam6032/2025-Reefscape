@@ -46,6 +46,7 @@ public class RobotContainer {
             OIConstants.kOperatorControllerPort);
 
     private SendableChooser<Command> autoChooser;
+    private SendableChooser<double> delayChooser;
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
@@ -97,6 +98,9 @@ public class RobotContainer {
 
         // Config buttons
         initAutoChooser();
+
+        // Auto delay chooser
+        initAutoChooser();
     }
 
     private void configureNamedCommands() {
@@ -117,6 +121,15 @@ public class RobotContainer {
     private void initAutoChooser() {
         autoChooser = AutoBuilder.buildAutoChooser();
         SmartDashboard.putData("Auto Chooser", autoChooser);
+    }
+
+    private void initAutoStartDelay() {
+        delayChooser = new SendableChooser<>();
+        delayChooser.setDefaultOption("0 seconds", 0.0);
+        delayChooser.addOption("2 seconds", 2.0);
+        delayChooser.addOption("5 seconds", 5.0);
+        delayChooser.addOption("10 seconds", 10.0);
+        SmartDashboard.putData("Start Delay", delayChooser);
     }
 
     /**
@@ -215,6 +228,10 @@ public class RobotContainer {
     // Get the selected auto command
     public Command getAutonomousCommand() {
         return autoChooser.getSelected();
+    }
+
+    public Command getDelay() {
+        return delayChooser.getSelected();
     }
 
 }
