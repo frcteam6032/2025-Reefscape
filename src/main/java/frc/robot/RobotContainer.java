@@ -1,11 +1,14 @@
 package frc.robot;
 
+import java.util.function.BooleanSupplier;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -37,7 +40,7 @@ public class RobotContainer {
     private final Command feederStation;
     private final Command homeStation;
     private final Command L3Station;
-
+    private final Command L2Station;
     // Create the driver controller
     private final CommandXboxController m_driverController = new CommandXboxController(
             OIConstants.kDriverControllerPort);
@@ -46,7 +49,6 @@ public class RobotContainer {
             OIConstants.kOperatorControllerPort);
 
     private SendableChooser<Command> autoChooser;
-    private SendableChooser<double> delayChooser;
 
     private final SlewRateLimiter xLimiter = new SlewRateLimiter(4.);
     private final SlewRateLimiter yLimiter = new SlewRateLimiter(4.);
@@ -82,6 +84,9 @@ public class RobotContainer {
 
         CoralManagement.init(m_coralInfeed, m_elevator);
 
+        L2Station = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level2)
+                .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Level2));
+
         feederStation = CoralManagement.runToPositionCommand(() -> ElevatorPosition.FeederStation)
                 .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Home));
 
@@ -91,6 +96,7 @@ public class RobotContainer {
         L3Station = CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level3)
                 .alongWith(Commands.runOnce(() -> CoralManagement.targetPosition = ElevatorPosition.Level3));
 
+        SmartDashboard.putNumber("Auto Delay", 0.0);
         configureNamedCommands();
 
         // Configure the buttons & default commands
@@ -99,8 +105,16 @@ public class RobotContainer {
         // Config buttons
         initAutoChooser();
 
-        // Auto delay chooser
-        initAutoChooser();
+    }
+
+    private int getIsRed() {
+        var alliance = DriverStation.getAlliance();
+
+        if (alliance.isPresent()) {
+            return alliance.get() == DriverStation.Alliance.Red ? -1 : 1;
+        }
+
+        return 1;
     }
 
     private void configureNamedCommands() {
@@ -110,6 +124,8 @@ public class RobotContainer {
         NamedCommands.registerCommand("Vision Align Right", visionReefScoreRight().withTimeout(1.0));
 
         NamedCommands.registerCommand("Move L3", L3Station);
+        NamedCommands.registerCommand("Move L2", L2Station);
+
         NamedCommands.registerCommand("Move Feeder Station", feederStation);
 
         NamedCommands.registerCommand(
@@ -123,27 +139,17 @@ public class RobotContainer {
         SmartDashboard.putData("Auto Chooser", autoChooser);
     }
 
-    private void initAutoStartDelay() {
-        delayChooser = new SendableChooser<>();
-        delayChooser.setDefaultOption("0 seconds", 0.0);
-        delayChooser.addOption("2 seconds", 2.0);
-        delayChooser.addOption("5 seconds", 5.0);
-        delayChooser.addOption("10 seconds", 10.0);
-        SmartDashboard.putData("Start Delay", delayChooser);
-    }
-
     /**
      * DONT CHANGE THESE
      */
     private void configureButtonBindings() {
-        // Setting up driver commands
 
         // Default drive command
         m_robotDrive.setDefaultCommand(
                 new RunCommand(
                         () -> m_robotDrive.joystickDrive(
-                                getXSpeed(),
-                                getYSpeed(),
+                                getXSpeed() * getIsRed(),
+                                getYSpeed() * getIsRed(),
                                 getRotationSpeed(),
                                 true),
                         m_robotDrive));
@@ -162,9 +168,9 @@ public class RobotContainer {
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
 
         /* Y: Vision Align */
-        m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(
-                m_limelight, () -> getXSpeed(),
-                () -> getYSpeed()));
+        // m_driverController.y().toggleOnTrue(m_robotDrive.visionRotateCommand(
+        // m_limelight, () -> getXSpeed(),
+        // () -> getYSpeed());
 
         /* X: X-Drive */
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
@@ -230,8 +236,8 @@ public class RobotContainer {
         return autoChooser.getSelected();
     }
 
-    public Command getDelay() {
-        return delayChooser.getSelected();
+    public double getDelay() {
+        return SmartDashboard.getNumber("Auto Delay", 0);
     }
 
 }

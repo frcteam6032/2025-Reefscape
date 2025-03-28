@@ -4,6 +4,8 @@
 
 package frc.robot.util;
 
+import java.util.stream.DoubleStream;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 
 /** Add your docs here. */

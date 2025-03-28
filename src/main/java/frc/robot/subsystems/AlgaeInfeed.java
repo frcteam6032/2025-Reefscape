@@ -52,7 +52,7 @@ public class AlgaeInfeed extends SubsystemBase {
     private static final SparkBaseConfig INTAKE_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
             .inverted(true)
-            .smartCurrentLimit(20);
+            .smartCurrentLimit(50);
 
     private final SparkBaseConfig PIVOT_CONFIG = new SparkMaxConfig()
             .idleMode(IdleMode.kBrake)
