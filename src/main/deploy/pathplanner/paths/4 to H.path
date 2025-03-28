@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.5464139344262293,
-        "y": 0.8063012295081955
+        "x": 1.5210000000000001,
+        "y": 0.8367499999999995
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.646913934426228,
-        "y": 0.7965512295081976
+        "x": 5.345077868852458,
+        "y": 0.7408483606557378
       },
       "isLocked": false,
       "linkedName": "Station 4"
@@ -20,8 +20,8 @@
         "y": 3.8806500000026434
       },
       "prevControl": {
-        "x": 8.283504098360655,
-        "y": 3.7552766393442623
+        "x": 7.935860655737705,
+        "y": 2.1249487704918035
       },
       "nextControl": null,
       "isLocked": false,
@@ -48,7 +48,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 126.40877456777235
+    "rotation": -125.00000000000001
   },
   "useDefaultConstraints": true
 }

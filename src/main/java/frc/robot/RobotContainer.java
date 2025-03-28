@@ -176,10 +176,10 @@ public class RobotContainer {
         m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
 
         /* B (left): Vision Score Left */
-        m_driverController.b().whileTrue(visionReefScoreLeft());
+        m_driverController.leftStick().whileTrue(visionReefScoreLeft());
 
         /* A (right): Vision Score Right */
-        m_driverController.a().whileTrue(visionReefScoreRight());
+        m_driverController.rightStick().whileTrue(visionReefScoreRight());
 
         // ==============
         // DRIVER MANUAL
@@ -193,8 +193,11 @@ public class RobotContainer {
         // OPERATOR CONTROLLER
         // ====================
 
-        /* Y: Cycle Elevator */
-        m_operatorController.y().onTrue(CoralManagement.cycleAndRunToPositionCommand());
+        /* X: Level 2 */
+        m_operatorController.x().onTrue(CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level2));
+
+        /* Y: Level 3 */
+        m_operatorController.y().onTrue(CoralManagement.runToPositionCommand(() -> ElevatorPosition.Level3));
 
         /* A: Feeder Station */
         m_operatorController.a().onTrue(feederStation);

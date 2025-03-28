@@ -26,6 +26,12 @@
         {
           "type": "named",
           "data": {
+            "name": "Vision Align Right"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "Score Timed"
           }
         },
@@ -71,6 +77,12 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Vision Align Left"
           }
         },
         {
