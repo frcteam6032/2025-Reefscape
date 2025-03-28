@@ -11,7 +11,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Right Start to D"
+                  "pathName": "Right Start To B"
                 }
               },
               {
@@ -36,7 +36,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "D to Station 4"
+                  "pathName": "B To 4"
                 }
               },
               {
@@ -61,7 +61,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "Station 4 to C"
+                  "pathName": "4 To A"
                 }
               },
               {
