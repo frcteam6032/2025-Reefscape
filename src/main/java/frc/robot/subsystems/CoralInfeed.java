@@ -143,7 +143,7 @@ public class CoralInfeed extends SubsystemBase {
     }
 
     public Command scoreCommand() {
-        return setIntakeCommand(-0.8);
+        return setIntakeCommand(-0.5);
     }
 
     public Command intakeCommand() {
@@ -156,9 +156,9 @@ public class CoralInfeed extends SubsystemBase {
 
     public Command smartIntakeCommand() {
         return intakeCommand()
-                .beforeStarting(() -> lastIntakeVel = 0.0)
                 .andThen(Commands.waitSeconds(0.25))
-                .andThen(Commands.waitSeconds(5.0).until(this::hasPiece))
+                .andThen(Commands.waitSeconds(3.0).until(this::hasPiece))
+                .andThen(Commands.waitSeconds(0.25))
                 .andThen(stopIntakeCommand());
     }
 
@@ -192,6 +192,6 @@ public class CoralInfeed extends SubsystemBase {
         SmartDashboard.putBoolean("bool current", currentHigh);
         SmartDashboard.putBoolean("bool on", on);
 
-        return speedLow && currentHigh && on && slowingDown;
+        return speedLow && currentHigh && on;
     }
 }

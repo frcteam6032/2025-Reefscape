@@ -16,16 +16,16 @@
     },
     {
       "anchor": {
-        "x": 5.4304303278688515,
-        "y": 5.33955368852459
+        "x": 5.2985655737704915,
+        "y": 5.433555327868853
       },
       "prevControl": {
-        "x": 5.634930561499662,
-        "y": 5.195749465899021
+        "x": 5.503065807401302,
+        "y": 5.289751105243284
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Flipped - F"
     }
   ],
   "rotationTargets": [],

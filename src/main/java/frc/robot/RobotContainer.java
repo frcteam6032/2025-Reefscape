@@ -159,10 +159,11 @@ public class RobotContainer {
         // ==================
 
         /* RB: Toggle Algae Infeed */
-        m_driverController.rightBumper().onTrue(m_algae.toggleCommand());
+        // m_driverController.rightBumper().onTrue(m_algae.toggleCommand());
 
         /* LT: Algae Infeed */
-        m_driverController.leftTrigger().onTrue(m_algae.intakeCommand(1.0));
+        m_driverController.leftTrigger().onTrue(m_algae.intakeCommand(1.0).andThen(m_algae.deployCommand())).onFalse(
+                m_algae.stowCommand());
 
         /* Start: Reset Odometry */
         m_driverController.start().onTrue(Commands.runOnce(() -> m_robotDrive.setOdometry(new Pose2d())));
@@ -173,13 +174,13 @@ public class RobotContainer {
         // () -> getYSpeed());
 
         /* X: X-Drive */
-        m_driverController.x().toggleOnTrue(m_robotDrive.setXCommand());
+        m_driverController.x().whileTrue(m_robotDrive.setXCommand());
 
         /* B (left): Vision Score Left */
-        m_driverController.leftStick().whileTrue(visionReefScoreLeft());
+        m_driverController.leftBumper().whileTrue(visionReefScoreLeft());
 
         /* A (right): Vision Score Right */
-        m_driverController.rightStick().whileTrue(visionReefScoreRight());
+        m_driverController.rightBumper().whileTrue(visionReefScoreRight());
 
         // ==============
         // DRIVER MANUAL
@@ -213,7 +214,7 @@ public class RobotContainer {
                 .onFalse(m_coralInfeed.stopIntakeCommand());
 
         /* LB: Algae Outfeed */
-        m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.8)).onFalse(m_algae.stopIntakeCommand());
+        m_operatorController.leftBumper().whileTrue(m_algae.intakeCommand(-0.4)).onFalse(m_algae.stopIntakeCommand());
 
         /* RB: Slow Coral Outfeed */
         m_operatorController.rightBumper().whileTrue(m_coralInfeed.setIntakeCommand(-0.2))
