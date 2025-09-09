@@ -8,7 +8,6 @@ import java.util.stream.DoubleStream;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 
-/** Add your docs here. */
 public class Utils {
     private static final double BASE_SPEED = 0.4;
 
