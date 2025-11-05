@@ -6,12 +6,9 @@ package frc.robot;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
 
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.commands.SuppliedWaitCommand;
-import frc.robot.util.DashboardStore;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -40,14 +37,7 @@ public class Robot extends TimedRobot {
         m_robotContainer = new RobotContainer();
 
         // Can speed up autons
-        FollowPathCommand.warmupCommand().schedule();
 
-        // Update dashboard values every 100ms
-        addPeriodic(() -> {
-            DashboardStore.update();
-        }, 0.1);
-
-        CameraServer.startAutomaticCapture();
     }
 
     /**
@@ -88,11 +78,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void autonomousInit() {
-        m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-        if (m_autonomousCommand != null) {
-            Command delayCommand = new SuppliedWaitCommand(m_robotContainer::getDelay);
-            delayCommand.andThen(m_autonomousCommand).schedule();
-        }
+   
     }
 
     /** This function is called periodically during autonomous. */
